@@ -5,27 +5,30 @@ import "Srl/String.alusus";
 type Json {
     use Srl;
     def jsonString: String;
-    def keysArray: Array[String];
-    def valuesArray: Array[String];
+    def keys: Array[String];
+    def values: Array[String];
 
-    handler this~init() {
+    handler this~init() {}
+
+    handler this~init(str: String) this.initialize(str);
+
+    handler this~init(str: ptr[array[Char]]) this.initialize(String(str));
+
+    handler this~init(json: ref[Json]) {
+        this.jsonString = json.jsonString
+        this.keys = json.keys
+        this.values = json.values
     }
 
-    handler this~init(str: String) {
+    func initialize(str: String) {
+        this.keys.clear();
+        this.values.clear();
         this.jsonString = str.trim();
         if this.jsonString.find(",") == -1 {
             this.parse(this.jsonString.slice(1, this.jsonString.getLength() - 2));
         } else {
             this.parseAll();
         }
-    }
-
-    handler this~init(str: ptr[array[Char]]) this = str
-
-    handler this~init(json: ref[Json]) {
-        this.jsonString = json.jsonString
-        this.keysArray = json.keysArray
-        this.valuesArray = json.valuesArray
     }
 
     func parse(string: String) {
@@ -40,10 +43,10 @@ type Json {
             skipOperators.add('\'')
             skipOperators.add('\'')
             def splitArray: Array[String] = this.splitString(string, ':', skipOperators);
-            this.keysArray.add(this.removeQuotes(splitArray(0).trim()));
-            this.valuesArray.add(string.slice(splitArray(0).getLength() + 1, string.getLength()-1).trim());
+            this.keys.add(this.removeQuotes(splitArray(0).trim()));
+            this.values.add(string.slice(splitArray(0).getLength() + 1, string.getLength()-1).trim());
         } else if this.isArray() {
-            this.valuesArray.add(string.trim());
+            this.values.add(string.trim());
         }
     }
 
@@ -94,12 +97,6 @@ type Json {
         return arr;
     };
 
-    func isQuotes(string: String): bool {
-        if string(0) == string(string.getLength() -1) && string(0) == '"' || string(0) == '\''
-        return true
-        return false
-    }
-
     func hasQuotes(stringWithQuotes: String): Bool {
         def stringWithoutQuotes: String = stringWithQuotes
         if stringWithoutQuotes(0) == stringWithoutQuotes(stringWithoutQuotes.getLength() -1) && (stringWithoutQuotes(0) == '"' || stringWithoutQuotes(0) == '\'') {
@@ -141,16 +138,16 @@ type Json {
     }
 
     func getLength(): Int {
-        return this.valuesArray.getLength();
+        return this.values.getLength();
     }
 
     func get(key: ptr[array[Char]]): String {
         def result: String;
 
         def index: int = 0;
-        for, index < this.keysArray.getLength(), index++ {
-            if this.keysArray(index) == key {
-                result = this.valuesArray(index);
+        for, index < this.keys.getLength(), index++ {
+            if this.keys(index) == key {
+                result = this.values(index);
             }
         }
 
@@ -158,7 +155,7 @@ type Json {
     }
 
     func get(index: Int): String {
-        def result: String = this.valuesArray(index);
+        def result: String = this.values(index);
         return result;
     }
 
@@ -222,18 +219,13 @@ type Json {
         return ?
     }*/
 
-    handler this = ptr[array[Char]] {
-        def json: String = value;
-        this~init(json);
-    }
+    handler this = ptr[array[Char]] this.initialize(String(value));
 
-    handler this = String {
-        this~init(value);
-    }
+    handler this = String this.initialize(value);
 
     handler this = ref[Json] {
         this.jsonString = value.jsonString
-        this.keysArray = value.keysArray
-        this.valuesArray = value.valuesArray
+        this.keys = value.keys
+        this.values = value.values
     }
 }
