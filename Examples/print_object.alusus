@@ -6,9 +6,9 @@ use Srl
 func start {
     def obj: Json = "{\n\t\"success\": true,\n\t\"time\": \"2020-01-14T17ZT\",\n\t\"hostname\": \"localhost\"\n}"
 
-    Console.print("key: %s \t\t\t value: %s\n", obj.keysArray(0).buf, obj.valuesArray(0).buf)
-    Console.print("key: %s \t\t\t value: %s\n", obj.keysArray(1).buf, obj.valuesArray(1).buf)
-    Console.print("key: %s \t\t\t value: %s\n", obj.keysArray(2).buf, obj.valuesArray(2).buf)
+    Console.print("key: %s \t\t\t value: %s\n", obj.keys(0).buf, obj.values(0).buf)
+    Console.print("key: %s \t\t\t value: %s\n", obj.keys(1).buf, obj.values(1).buf)
+    Console.print("key: %s \t\t\t value: %s\n", obj.keys(2).buf, obj.values(2).buf)
 }
 start();
 
