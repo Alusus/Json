@@ -2,7 +2,7 @@ import "Srl/Console.alusus";
 import "Srl/Array.alusus";
 import "Srl/String.alusus";
 
-type Json {
+class Json {
     use Srl;
     def jsonString: String;
     def keys: Array[String];
@@ -20,7 +20,7 @@ type Json {
         this.values = json.values
     }
 
-    func initialize(str: String) {
+    handler this.initialize(str: String) {
         this.keys.clear();
         this.values.clear();
         this.jsonString = str.trim();
@@ -31,7 +31,7 @@ type Json {
         }
     }
 
-    func parse(string: String) {
+    handler this.parse(string: String) {
         if this.isObject() {
             def skipOperators: Array[Char];
             skipOperators.add('{')
@@ -50,7 +50,7 @@ type Json {
         }
     }
 
-    func parseAll {
+    handler this.parseAll() {
         def skipOperators: Array[Char];
         skipOperators.add('{')
         skipOperators.add('}')
@@ -67,7 +67,7 @@ type Json {
         };
     }
 
-    func splitString(str: String, splitOperator: Char, skipOperators: Array[Char]): Array[String] {
+    handler this.splitString(str: String, splitOperator: Char, skipOperators: Array[Char]): Array[String] {
         def arr: Array[String];
         def tempString: String = "";
         def skip: Int = 0;
@@ -97,11 +97,20 @@ type Json {
         return arr;
     };
 
-    func hasQuotes(stringWithQuotes: String): Bool {
+    handler this.hasQuotes(stringWithQuotes: String): Bool {
         def stringWithoutQuotes: String = stringWithQuotes
         if stringWithoutQuotes(0) == stringWithoutQuotes(stringWithoutQuotes.getLength() -1) && (stringWithoutQuotes(0) == '"' || stringWithoutQuotes(0) == '\'') {
             return true
-        } else if (((stringWithoutQuotes(0) == '"' || stringWithoutQuotes(0) == '\'') && stringWithoutQuotes(0) != stringWithoutQuotes(stringWithoutQuotes.getLength() -1)) || ((stringWithoutQuotes(stringWithoutQuotes.getLength() -1) == '"' || stringWithoutQuotes(stringWithoutQuotes.getLength() -1) == '\'') && stringWithoutQuotes(0) != stringWithoutQuotes(stringWithoutQuotes.getLength() -1))) {
+        } else if ((
+            (stringWithoutQuotes(0) == '"' || stringWithoutQuotes(0) == '\'') &&
+            stringWithoutQuotes(0) != stringWithoutQuotes(stringWithoutQuotes.getLength() - 1)
+        ) || (
+            (
+                stringWithoutQuotes(stringWithoutQuotes.getLength() -1) == '"' ||
+                stringWithoutQuotes(stringWithoutQuotes.getLength() -1) == '\''
+            ) &&
+            stringWithoutQuotes(0) != stringWithoutQuotes(stringWithoutQuotes.getLength() -1)
+        )) {
             // ERROR: "UNEXPECTED TOKEN" or "UNCOMPLATE QUOTATION"
             // Console.print("\t%s%s%s UNEXPECTED TOKEN %s\t\n", Console.Style.BG_RED, Console.Style.FG_WHITE, Console.Style.BLINK, Console.Style.RESET)
             return false
@@ -110,7 +119,7 @@ type Json {
         return false;
     }
 
-    func removeQuotes(stringWithQuotes: String): String {
+    handler this.removeQuotes(stringWithQuotes: String): String {
         if this.hasQuotes(stringWithQuotes) {
             stringWithQuotes = stringWithQuotes.slice(1, stringWithQuotes.getLength() - 2);
         }
@@ -118,30 +127,30 @@ type Json {
         return stringWithQuotes;
     }
 
-    func removeQuotes(stringWithQuotes: ptr[array[Char]]): String {
+    handler this.removeQuotes(stringWithQuotes: ptr[array[Char]]): String {
         def str: String = stringWithQuotes;
         return this.removeQuotes(str);
     }
 
-    func isObject(): bool {
+    handler this.isObject(): bool {
         if this.jsonString.getLength() != 0
         if this.jsonString(0) == '{' && this.jsonString(this.jsonString.getLength() -1) == '}'
         return true;
         return false;
     }
 
-    func isArray(): bool {
+    handler this.isArray(): bool {
         if this.jsonString.getLength() != 0
         if this.jsonString(0) == '[' && this.jsonString(this.jsonString.getLength() -1) == ']'
         return true;
         return false;
     }
 
-    func getLength(): Int {
+    handler this.getLength(): Int {
         return this.values.getLength();
     }
 
-    func get(key: ptr[array[Char]]): String {
+    handler this.get(key: ptr[array[Char]]): String {
         def result: String;
 
         def index: int = 0;
@@ -154,48 +163,48 @@ type Json {
         return result;
     }
 
-    func get(index: Int): String {
+    handler this.get(index: Int): String {
         def result: String = this.values(index);
         return result;
     }
 
-    func getString(key: ptr[array[Char]]): String {
+    handler this.getString(key: ptr[array[Char]]): String {
         def str: String = this.get(key);
         return this.removeQuotes(str);
     }
 
-    func getString(index: Int): String {
+    handler this.getString(index: Int): String {
         def str: String = this.get(index);
         return this.removeQuotes(str);
     }
 
-    func getObject(key: ptr[array[Char]]): Json {
+    handler this.getObject(key: ptr[array[Char]]): Json {
         def obj: Json = this.get(key);
         return obj;
     }
 
-    func getObject(index: Int): Json {
+    handler this.getObject(index: Int): Json {
         def obj: Json = this.get(index);
         return obj;
     }
 
-    func getInt(key: ptr[array[Char]]): Int {
+    handler this.getInt(key: ptr[array[Char]]): Int {
         return String.parseInt(this.get(key));
     }
 
-    func getInt(index: Int): Int {
+    handler this.getInt(index: Int): Int {
         return String.parseInt(this.get(index));
     }
 
-    func getFloat(key: ptr[array[Char]]): Float {
+    handler this.getFloat(key: ptr[array[Char]]): Float {
         return String.parseFloat(this.get(key));
     }
 
-    func getFloat(index: Int): Float {
+    handler this.getFloat(index: Int): Float {
         return String.parseFloat(this.get(index));
     }
 
-    func getBool(key: ptr[array[Char]]): Bool {
+    handler this.getBool(key: ptr[array[Char]]): Bool {
         def boolean: Bool;
 
         if this.get(key).toLowerCase() == "true"
@@ -205,7 +214,7 @@ type Json {
         return false
     }
 
-    func getBool(index: Int): Bool {
+    handler this.getBool(index: Int): Bool {
         def boolean: Bool;
 
         if this.get(index).toLowerCase() == "true"
@@ -215,7 +224,7 @@ type Json {
     }
 
     /* TODO: if json is valid return true or false if it isn't valid
-    func isValid(): Bool {
+    handler this.isValid(): Bool {
         return ?
     }*/
 
