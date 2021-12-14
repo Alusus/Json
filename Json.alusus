@@ -4,6 +4,7 @@ import "Srl/String.alusus";
 
 class Json {
     use Srl;
+    @shared def skipOperators: Array[Char]({ '{', '}', '[', ']', '"', '"', '\'', '\'' });
     def jsonString: String;
     def keys: Array[String];
     def values: Array[String];
@@ -12,7 +13,7 @@ class Json {
 
     handler this~init(str: String) this.initialize(str);
 
-    handler this~init(str: ptr[array[Char]]) this.initialize(String(str));
+    handler this~init(str: ptr[array[Char]]) this.initialize(String(1, str));
 
     handler this~init(json: ref[Json]) {
         this.jsonString = json.jsonString
@@ -33,16 +34,7 @@ class Json {
 
     handler this.parse(string: String) {
         if this.isObject() {
-            def skipOperators: Array[Char];
-            skipOperators.add('{')
-            skipOperators.add('}')
-            skipOperators.add('[')
-            skipOperators.add(']')
-            skipOperators.add('"')
-            skipOperators.add('"')
-            skipOperators.add('\'')
-            skipOperators.add('\'')
-            def splitArray: Array[String] = this.splitString(string, ':', skipOperators);
+            def splitArray: Array[String] = this.splitString(string, ':');
             this.keys.add(this.removeQuotes(splitArray(0).trim()));
             this.values.add(string.slice(splitArray(0).getLength() + 1, string.getLength()-1).trim());
         } else if this.isArray() {
@@ -51,23 +43,14 @@ class Json {
     }
 
     handler this.parseAll() {
-        def skipOperators: Array[Char];
-        skipOperators.add('{')
-        skipOperators.add('}')
-        skipOperators.add('[')
-        skipOperators.add(']')
-        skipOperators.add('"')
-        skipOperators.add('"')
-        skipOperators.add('\'')
-        skipOperators.add('\'')
         def index: int;
-        def splitArray: Array[String] = this.splitString(this.jsonString.slice(1, this.jsonString.getLength() - 2), ',', skipOperators);
+        def splitArray: Array[String] = this.splitString(this.jsonString.slice(1, this.jsonString.getLength() - 2), ',');
         for index=0, index < splitArray.getLength(), index++ {
             this.parse(splitArray(index));
         };
     }
 
-    handler this.splitString(str: String, splitOperator: Char, skipOperators: Array[Char]): Array[String] {
+    handler this.splitString(str: String, splitOperator: Char): Array[String] {
         def arr: Array[String];
         def tempString: String = "";
         def skip: Int = 0;
@@ -133,17 +116,13 @@ class Json {
     }
 
     handler this.isObject(): bool {
-        if this.jsonString.getLength() != 0
-        if this.jsonString(0) == '{' && this.jsonString(this.jsonString.getLength() -1) == '}'
-        return true;
-        return false;
+        if this.jsonString(0) == '{' && this.jsonString(this.jsonString.getLength() - 1) == '}' return true
+        else return false;
     }
 
     handler this.isArray(): bool {
-        if this.jsonString.getLength() != 0
-        if this.jsonString(0) == '[' && this.jsonString(this.jsonString.getLength() -1) == ']'
-        return true;
-        return false;
+        if this.jsonString(0) == '[' && this.jsonString(this.jsonString.getLength() -1) == ']' return true
+        else return false;
     }
 
     handler this.getLength(): Int {
