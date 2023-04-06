@@ -4,7 +4,8 @@ import "Srl/String.alusus";
 
 class Json {
     use Srl;
-    @shared def skipOperators: Array[Char]({ '{', '}', '[', ']', '"', '"', '\'', '\'' });
+    @shared def skipOperators: Array[Char]({ '{', '[', '"', '\'' });
+    @shared def skipOperatorsClose: Array[Char]({ '}', ']', '"', '\'' });
     def jsonString: String;
     def keys: Array[String];
     def values: Array[String];
@@ -51,22 +52,29 @@ class Json {
     }
 
     handler this.splitString(str: String, splitOperator: Char): Array[String] {
+        def stack: Array[Char];
         def arr: Array[String];
         def tempString: String = "";
-        def skip: Int = 0;
 
         def index: int;
         for index=0, index<str.getLength(), index++ {
+            if str(index) == '\\' {
+                ++index;
+                if str(index) == 'n' tempString += "\n"
+                else tempString += str(index);
+                continue;
+            }
             def opInd: int;
-            for opInd=0, opInd<skipOperators.getLength(), opInd++ {
-                if str(index) == skipOperators(opInd)
-                    if opInd % 2 == 0
-                        skip++
-                    else
-                        skip--
-            };
+            if stack.getLength() > 0 and str(index) == stack(stack.getLength() - 1) {
+                stack.remove(stack.getLength() - 1);
+            } else {
+                for opInd=0, opInd<skipOperators.getLength(), opInd++ {
+                    if str(index) == skipOperators(opInd)
+                        stack.add(skipOperatorsClose(opInd));
+                }
+            }
 
-            if str(index) == splitOperator && skip <= 0 {
+            if str(index) == splitOperator && stack.getLength() == 0 {
                 arr.add(tempString);
                 tempString = "";
             } else
