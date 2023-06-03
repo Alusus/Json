@@ -156,18 +156,18 @@ Calls the right version of the method `get` and returns the result as an object 
 ### getInt
 
 ```
-handler this.getInt(key: ptr[array[Char]]): Int;
-handler this.getInt(index: Int): Int;
+handler this.getInt(key: ptr[array[Char]]): Int[64];
+handler this.getInt(index: Int): Int[64];
 ```
-Calls the right version of the method `get` and returns the result converted to the type `int`.
+Calls the right version of the method `get` and returns the result converted to the type `Int[64]`.
 
 ### getFloat
 
 ```
-handler this.getFloat(key: ptr[array[Char]]): Float;
-handler this.getFloat(index: Int): Float
+handler this.getFloat(key: ptr[array[Char]]): Float[64];
+handler this.getFloat(index: Int): Float[64];
 ```
-Calls the right version of the method `get` and returns the result converted to the type `float`.
+Calls the right version of the method `get` and returns the result converted to the type `Float[64]`.
 
 ### getBool
 

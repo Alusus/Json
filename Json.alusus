@@ -175,19 +175,19 @@ class Json {
         return obj;
     }
 
-    handler this.getInt(key: ptr[array[Char]]): Int {
+    handler this.getInt(key: ptr[array[Char]]): Int[64] {
         return String.parseInt(this.get(key));
     }
 
-    handler this.getInt(index: Int): Int {
+    handler this.getInt(index: Int): Int[64] {
         return String.parseInt(this.get(index));
     }
 
-    handler this.getFloat(key: ptr[array[Char]]): Float {
+    handler this.getFloat(key: ptr[array[Char]]): Float[64] {
         return String.parseFloat(this.get(key));
     }
 
-    handler this.getFloat(index: Int): Float {
+    handler this.getFloat(index: Int): Float[64] {
         return String.parseFloat(this.get(index));
     }
 
