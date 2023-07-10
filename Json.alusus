@@ -61,6 +61,8 @@ class Json {
             if str(index) == '\\' {
                 ++index;
                 if str(index) == 'n' tempString += "\n"
+                else if str(index) == 'r' tempString += "\r"
+                else if str(index) == 't' tempString += "\t"
                 else tempString += str(index);
                 continue;
             }
