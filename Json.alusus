@@ -1,229 +1,172 @@
-import "Srl/Console.alusus";
 import "Srl/Array.alusus";
 import "Srl/String.alusus";
 
 class Json {
     use Srl;
-    @shared def skipOperators: Array[Char]({ '{', '[', '"', '\'' });
-    @shared def skipOperatorsClose: Array[Char]({ '}', ']', '"', '\'' });
-    def jsonString: String;
     def keys: Array[String];
-    def values: Array[String];
+    def values: Array[Json];
+    def rawValue: String;
 
     handler this~init() {}
 
-    handler this~init(str: String) this.initialize(str);
-
-    handler this~init(str: ptr[array[Char]]) this.initialize(String(1, str));
+    handler this~init(str: ptr[array[Char]]) this.initialize(str);
 
     handler this~init(json: ref[Json]) {
-        this.jsonString = json.jsonString
-        this.keys = json.keys
-        this.values = json.values
+        this = json;
     }
 
-    handler this.initialize(str: String) {
+    handler this = ptr[array[Char]] this.initialize(value);
+
+    handler this = ref[Json] {
+        this.rawValue = value.rawValue
+        this.keys = value.keys
+        this.values = value.values
+    }
+
+    handler this.initialize(str: CharsPtr) {
+        this.rawValue.clear();
         this.keys.clear();
         this.values.clear();
-        this.jsonString = str.trim();
-        if this.jsonString.find(",") == -1 {
-            this.parse(this.jsonString.slice(1, this.jsonString.getLength() - 2));
+        this.parse(str);
+    }
+
+    handler this.parse(str: CharsPtr) {
+        while str~cnt(0) == ' ' or str~cnt(0) == '\n' or str~cnt(0) == '\t' or str~cnt(0) == '\r' str = str + 1;
+        if str~cnt(0) == '{' {
+            str = str + 1;
+            while str~cnt(0) != 0 and str~cnt(0) != '}' {
+                def commaIndex: Int = findSeparator(str, ',');
+                if commaIndex == 0 break;
+                def colonIndex: Int = findSeparator(str, ':');
+                if colonIndex != 0 {
+                    this.keys.add(parseString(str, colonIndex));
+                    this.values.add(Json(str + colonIndex + 1));
+                }
+                str = str + commaIndex;
+                if str~cnt(0) == ',' str = str + 1;
+            }
+        } else if str~cnt(0) == '[' {
+            str = str + 1;
+            while str~cnt(0) != 0 and str~cnt(0) != ']' {
+                def commaIndex: Int = findSeparator(str, ',');
+                if commaIndex == 0 break;
+                this.values.add(Json(str));
+                str = str + commaIndex;
+                if str~cnt(0) == ',' str = str + 1;
+            }
         } else {
-            this.parseAll();
+            def i: Int = 0;
+            def level: Int = 0;
+            while not isAtEnd(str~cnt(i), level, false) {
+                if str~cnt(i) == '\\' { ++i }
+                else if str~cnt(i) == '"' level = 1 - level;
+                ++i;
+            }
+            this.rawValue = String(str, i);
         }
     }
 
-    handler this.parse(string: String) {
-        if this.isObject() {
-            def splitArray: Array[String] = this.splitString(string, ':');
-            this.keys.add(this.removeQuotes(splitArray(0).trim()));
-            this.values.add(string.slice(splitArray(0).getLength() + 1, string.getLength()-1).trim());
-        } else if this.isArray() {
-            this.values.add(string.trim());
-        }
-    }
+    func findSeparator(str: CharsPtr, separator: Char): Int {
+        @shared def skipOperators: Array[Char]({ '{', '[', '"', '\'' });
+        @shared def skipOperatorsClose: Array[Char]({ '}', ']', '"', '\'' });
+        def stack: array[Char, 500];
+        def stackLen: Int = 0;
 
-    handler this.parseAll() {
-        def index: int;
-        def splitArray: Array[String] = this.splitString(this.jsonString.slice(1, this.jsonString.getLength() - 2), ',');
-        for index=0, index < splitArray.getLength(), index++ {
-            this.parse(splitArray(index));
-        };
-    }
-
-    handler this.splitString(str: String, splitOperator: Char): Array[String] {
-        def stack: Array[Char];
-        def arr: Array[String];
-        def tempString: String = "";
-
-        def index: int;
-        for index=0, index<str.getLength(), index++ {
-            if str(index) == '\\' {
-                ++index;
-                if str(index) == 'n' tempString += "\n"
-                else if str(index) == 'r' tempString += "\r"
-                else if str(index) == 't' tempString += "\t"
-                else tempString += str(index);
+        def start: Int = 0;
+        def i: Int;
+        for i = 0, not isAtEnd(str~cnt(i), stackLen, separator != ':'), ++i {
+            if str~cnt(i) == '\\' {
+                ++i;
                 continue;
             }
-            def opInd: int;
-            if stack.getLength() > 0 and str(index) == stack(stack.getLength() - 1) {
-                stack.remove(stack.getLength() - 1);
-            } else {
-                for opInd=0, opInd<skipOperators.getLength(), opInd++ {
-                    if str(index) == skipOperators(opInd)
-                        stack.add(skipOperatorsClose(opInd));
+            def opInd: Int;
+            if stackLen > 0 and str~cnt(i) == stack(stackLen - 1) {
+                --stackLen;
+            } else if stackLen == 0 or stack(stackLen - 1) != '"' {
+                for opInd = 0, opInd < skipOperators.getLength(), opInd++ {
+                    if str~cnt(i) == skipOperators(opInd) {
+                        stack(stackLen++) = skipOperatorsClose(opInd);
+                        // Break if we reach the stack limit to avoid memory violation. This will only happen if the
+                        // JSON file is 500 levels deep, which wouldn't happen in any practical situation.
+                        if stackLen == 500 break 2;
+                    }
                 }
             }
-
-            if str(index) == splitOperator && stack.getLength() == 0 {
-                arr.add(tempString);
-                tempString = "";
-            } else
-                tempString += str(index);
-        };
-
-        if tempString.getLength() > 0 {
-            arr.add(tempString)
         }
 
-        return arr;
+        return i;
     };
 
-    handler this.hasQuotes(stringWithQuotes: String): Bool {
-        def stringWithoutQuotes: String = stringWithQuotes
-        if stringWithoutQuotes(0) == stringWithoutQuotes(stringWithoutQuotes.getLength() -1) && (stringWithoutQuotes(0) == '"' || stringWithoutQuotes(0) == '\'') {
-            return true
-        } else if ((
-            (stringWithoutQuotes(0) == '"' || stringWithoutQuotes(0) == '\'') &&
-            stringWithoutQuotes(0) != stringWithoutQuotes(stringWithoutQuotes.getLength() - 1)
-        ) || (
-            (
-                stringWithoutQuotes(stringWithoutQuotes.getLength() -1) == '"' ||
-                stringWithoutQuotes(stringWithoutQuotes.getLength() -1) == '\''
-            ) &&
-            stringWithoutQuotes(0) != stringWithoutQuotes(stringWithoutQuotes.getLength() -1)
-        )) {
-            // ERROR: "UNEXPECTED TOKEN" or "UNCOMPLATE QUOTATION"
-            // Console.print("\t%s%s%s UNEXPECTED TOKEN %s\t\n", Console.Style.BG_RED, Console.Style.FG_WHITE, Console.Style.BLINK, Console.Style.RESET)
-            return false
+    func isAtEnd(c: Char, stackSize: Int, acceptColon: Bool): Bool {
+        if c == 0 return true;
+        return stackSize == 0 and (c == '}' or c == ']' or c == ',' or (c == ':' and not acceptColon));
+    }
+
+    func parseString(input: CharsPtr, len: ArchInt): String {
+        def result: String;
+        def inStr: Bool = false;
+        def i: Int;
+        for i = 0, i < len, ++i {
+            if inStr {
+                if input~cnt(i) == '"' break;
+                if input~cnt(i) == '\\' {
+                    ++i;
+                    if input~cnt(i) == 'n' result += '\n'
+                    else if input~cnt(i) == 'r' result += '\r'
+                    else if input~cnt(i) == 't' result += '\t'
+                    else result += input~cnt(i);
+                } else {
+                    result += input~cnt(i);
+                }
+            } else {
+                if input~cnt(i) == '"' inStr = true;
+            }
         }
-
-        return false;
-    }
-
-    handler this.removeQuotes(stringWithQuotes: String): String {
-        if this.hasQuotes(stringWithQuotes) {
-            stringWithQuotes = stringWithQuotes.slice(1, stringWithQuotes.getLength() - 2);
-        }
-
-        return stringWithQuotes;
-    }
-
-    handler this.removeQuotes(stringWithQuotes: ptr[array[Char]]): String {
-        def str: String = stringWithQuotes;
-        return this.removeQuotes(str);
-    }
-
-    handler this.isObject(): bool {
-        if this.jsonString(0) == '{' && this.jsonString(this.jsonString.getLength() - 1) == '}' return true
-        else return false;
-    }
-
-    handler this.isArray(): bool {
-        if this.jsonString(0) == '[' && this.jsonString(this.jsonString.getLength() -1) == ']' return true
-        else return false;
+        return result;
     }
 
     handler this.getLength(): Int {
         return this.values.getLength();
     }
 
-    handler this.get(key: ptr[array[Char]]): String {
-        def result: String;
-
-        def index: int = 0;
-        for, index < this.keys.getLength(), index++ {
-            if this.keys(index) == key {
-                result = this.values(index);
+    handler this(key: CharsPtr): ref[Json] {
+        @shared def empty: Json;
+        def i: Int;
+        for i = 0, i < this.keys.getLength(), ++i {
+            if this.keys(i) == key {
+                return this.values(i);
             }
         }
-
-        return result;
+        return empty;
     }
 
-    handler this.get(index: Int): String {
-        def result: String = this.values(index);
-        return result;
+    handler this(i: Int): Json {
+        return this.values(i);
     }
 
-    handler this.getString(key: ptr[array[Char]]): String {
-        def str: String = this.get(key);
-        return this.removeQuotes(str);
+    handler this~cast[String] {
+        return parseString(this.rawValue, this.rawValue.getLength());
     }
 
-    handler this.getString(index: Int): String {
-        def str: String = this.get(index);
-        return this.removeQuotes(str);
+    handler this~cast[Int[64]] {
+        return String.parseInt(this.rawValue);
     }
 
-    handler this.getObject(key: ptr[array[Char]]): Json {
-        def obj: Json = this.get(key);
-        return obj;
+    handler this~cast[Int[32]] {
+        return String.parseInt(this.rawValue);
     }
 
-    handler this.getObject(index: Int): Json {
-        def obj: Json = this.get(index);
-        return obj;
+    handler this~cast[Float[64]] {
+        return String.parseFloat(this.rawValue);
     }
 
-    handler this.getInt(key: ptr[array[Char]]): Int[64] {
-        return String.parseInt(this.get(key));
+    handler this~cast[Bool] {
+        if this.rawValue.toLowerCase() == "true" return true
+        else return false;
     }
 
-    handler this.getInt(index: Int): Int[64] {
-        return String.parseInt(this.get(index));
-    }
-
-    handler this.getFloat(key: ptr[array[Char]]): Float[64] {
-        return String.parseFloat(this.get(key));
-    }
-
-    handler this.getFloat(index: Int): Float[64] {
-        return String.parseFloat(this.get(index));
-    }
-
-    handler this.getBool(key: ptr[array[Char]]): Bool {
-        def boolean: Bool;
-
-        if this.get(key).toLowerCase() == "true"
-            return true
-        else if this.get(key).toLowerCase() == "false"
-            return false
-        return false
-    }
-
-    handler this.getBool(index: Int): Bool {
-        def boolean: Bool;
-
-        if this.get(index).toLowerCase() == "true"
-            return true
-        else if this.get(index).toLowerCase() == "false"
-            return false
-    }
-
-    /* TODO: if json is valid return true or false if it isn't valid
-    handler this.isValid(): Bool {
-        return ?
-    }*/
-
-    handler this = ptr[array[Char]] this.initialize(String(value));
-
-    handler this = String this.initialize(value);
-
-    handler this = ref[Json] {
-        this.jsonString = value.jsonString
-        this.keys = value.keys
-        this.values = value.values
+    handler this.isNull(): Bool {
+        if this.rawValue.toLowerCase() == "null" return true
+        else return false;
     }
 }

@@ -1,0 +1,12 @@
+import "Srl/Console.alusus";
+import "Apm";
+Apm.importFile("Alusus/Json");
+
+use Srl;
+func start {
+    def obj: Json = "{\"i\":{\"j\":\"a\\\"b,c]\"}}";
+    Console.print("%s\n", obj("i")("j")~cast[String].buf);
+    obj = "{\"key{with\\\"\": \"abc\"}";
+    Console.print("%s\n", obj("key{with\"")~cast[String].buf);
+}
+start();

@@ -1,0 +1,42 @@
+>>>>>> escaping.alusus
+
+a"b,c]
+abc
+
+
+
+>>>>>> print_object.alusus
+
+key: success 			 value: true
+key: time 			 value: 2020-01-14T17ZT
+key: hostname 			 value: localhost
+
+
+
+>>>>>> seek_nested.alusus
+
+XML
+3
+
+
+>>>>>> اطبع_كائن.أسس
+
+key: success 			 value: true
+key: time 			 value: 2020-01-14T17ZT
+key: hostname 			 value: localhost
+
+
+
+>>>>>> وصول_عميق.أسس
+
+XML
+3
+
+
+>>>>>> ترميز.أسس
+
+ا"ب،ت,ث[]
+ابت
+
+
+
