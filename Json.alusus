@@ -35,9 +35,9 @@ class Json {
         if str~cnt(0) == '{' {
             str = str + 1;
             while str~cnt(0) != 0 and str~cnt(0) != '}' {
-                def commaIndex: Int = findSeparator(str, ',');
+                def commaIndex: ArchInt = findSeparator(str, ',');
                 if commaIndex == 0 break;
-                def colonIndex: Int = findSeparator(str, ':');
+                def colonIndex: ArchInt = findSeparator(str, ':');
                 if colonIndex != 0 {
                     this.keys.add(parseString(str, colonIndex));
                     this.values.add(Json(str + colonIndex + 1));
@@ -48,14 +48,14 @@ class Json {
         } else if str~cnt(0) == '[' {
             str = str + 1;
             while str~cnt(0) != 0 and str~cnt(0) != ']' {
-                def commaIndex: Int = findSeparator(str, ',');
+                def commaIndex: ArchInt = findSeparator(str, ',');
                 if commaIndex == 0 break;
                 this.values.add(Json(str));
                 str = str + commaIndex;
                 if str~cnt(0) == ',' str = str + 1;
             }
         } else {
-            def i: Int = 0;
+            def i: ArchInt = 0;
             def level: Int = 0;
             while not isAtEnd(str~cnt(i), level, false) {
                 if str~cnt(i) == '\\' { ++i }
@@ -66,14 +66,14 @@ class Json {
         }
     }
 
-    func findSeparator(str: CharsPtr, separator: Char): Int {
+    func findSeparator(str: CharsPtr, separator: Char): ArchInt {
         @shared def skipOperators: Array[Char]({ '{', '[', '"', '\'' });
         @shared def skipOperatorsClose: Array[Char]({ '}', ']', '"', '\'' });
         def stack: array[Char, 500];
         def stackLen: Int = 0;
 
-        def start: Int = 0;
-        def i: Int;
+        def start: ArchInt = 0;
+        def i: ArchInt;
         for i = 0, not isAtEnd(str~cnt(i), stackLen, separator != ':'), ++i {
             if str~cnt(i) == '\\' {
                 ++i;
@@ -105,7 +105,7 @@ class Json {
     func parseString(input: CharsPtr, len: ArchInt): String {
         def result: String;
         def inStr: Bool = false;
-        def i: Int;
+        def i: ArchInt;
         for i = 0, i < len, ++i {
             if inStr {
                 if input~cnt(i) == '"' break;
@@ -129,6 +129,11 @@ class Json {
         return this.values.getLength();
     }
 
+    handler this.getKey(i: Int): String {
+        if i < 0 or i >= this.keys.getLength() return String();
+        return this.keys(i);
+    }
+
     handler this(key: CharsPtr): ref[Json] {
         @shared def empty: Json;
         def i: Int;
@@ -140,7 +145,7 @@ class Json {
         return empty;
     }
 
-    handler this(i: Int): Json {
+    handler this(i: Int): ref[Json] {
         return this.values(i);
     }
 
@@ -168,5 +173,13 @@ class Json {
     handler this.isNull(): Bool {
         if this.rawValue.toLowerCase() == "null" return true
         else return false;
+    }
+
+    handler this.isObject(): Bool {
+        return this.keys.getLength() > 0;
+    }
+
+    handler this.isArray(): Bool {
+        return this.values.getLength() > 0 && this.keys.getLength() == 0;
     }
 }
