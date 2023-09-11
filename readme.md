@@ -26,11 +26,11 @@ func start {
     def obj: Json = "{\n\t\"id\": 1,\n\t\"classes\": [\"c1\", \"c2\", \"c3\"],\n\t\"passed\": true\n}"
 
     // get the value stored under the key `id` as integer variable.
-    def id: int = obj.getInt("id");
+    def id: int = obj("id");
     Console.print("id is %d\n", id);
 
     // check if the value stored under the key `classes` is an array.
-    def classesObj: Json = obj.getObject("classes");
+    def classesObj: Json = obj("classes");
     if (classesObj.isArray()) {
         Console.print("Array\n");
     }
@@ -39,7 +39,7 @@ func start {
     }
 
     // get the value stored under the key `passed` as boolean variable
-    def passed: Bool = obj.getBool("passed");
+    def passed: Bool = obj("passed");
     // check if the student passed the exam or not.
     if (passed) {
         Console.print("passed\n");
@@ -58,17 +58,17 @@ start();
 
 ```
 class Json {
-    def jsonString: String;
     def keys: Array[String];
-    def values: Array[String];
+    def values: Array[Json];
+    def rawValue: String;
 }
 ```
 
-`jsonString`: string that represents the information stored as Json.
+`keys`: keys of the JSON if it's an object.
 
-`keys`: keys contained in `jsonString`.
+`values`: values of the JSON if it's an array or an object.
 
-`values`: values stored under `keys`.
+`rawValue`: raw value (unparsed) if the JSON is neither an object nor an array.
 
 ### Initialization
 
@@ -78,11 +78,6 @@ We can initialize this class using many methods:
 handler this~init()
 ```
 default initialization without parameters.
-
-```
-handler this~init(str: String)
-```
-initialization from a string.
 
 ```
 handler this~init(str: ptr[array[Char]])
@@ -99,81 +94,28 @@ initialization from another object of the class, copy initialization.
 ```
 handler this.isObject(): bool;
 ```
-checks if `jsonString` is an object or not.
+Checks if the JSON is an object.
 
 ### isArray
 
 ```
 handler this.isArray(): bool;
 ```
-checks if `jsonString` is an array or not.
+Checks if the JSON is an array or not.
 
 ### getLength
 
 ```
 handler this.getLength(): Int;
 ```
-get the number of values in the `jsonString`.
+Get the number of values in the JSON. This will return a positive number if the JSON is an object
+or an array.
 
-### get
-
-```
-handler this.get(key: ptr[array[Char]]): String;
-```
-get the value stored under `key`.
-
-parameters:
-
-`key`: the key as an array of char.
+### getKey
 
 ```
-handler this.get(index: Int): String;
+handler this.getKey(index: Int): String;
 ```
-get the value with index number `index`.
-
-parameters:
-
-`index`: the index of the value we want in the array of values.
-
-note: if the value is a string, then it is returned with the quotation marks.
-
-### getString
-
-```
-handler this.getString(key: ptr[array[Char]]): String;
-handler this.getString(index: Int): String;
-```
-Calls the right version of method `get` and returns the result without the quotation marks.
-
-### getObject
-
-```
-handler this.getObject(key: ptr[array[Char]]): Json;
-handler this.getObject(index: Int): Json;
-```
-Calls the right version of the method `get` and returns the result as an object of class `Json`.
-
-### getInt
-
-```
-handler this.getInt(key: ptr[array[Char]]): Int[64];
-handler this.getInt(index: Int): Int[64];
-```
-Calls the right version of the method `get` and returns the result converted to the type `Int[64]`.
-
-### getFloat
-
-```
-handler this.getFloat(key: ptr[array[Char]]): Float[64];
-handler this.getFloat(index: Int): Float[64];
-```
-Calls the right version of the method `get` and returns the result converted to the type `Float[64]`.
-
-### getBool
-
-```
-handler this.getBool(key: ptr[array[Char]]): Bool
-handler this.getBool(index: Int): Bool;
-```
-Calls the right version of the method `get` and returns the result converted to the type `bool`.
+Returns the key at at the specified index if the JSON is an object. Returns an empty string if
+the JSON is not an object or the index is out of range.
 
