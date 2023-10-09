@@ -2,6 +2,9 @@
 
 a"b,c]
 abc
+one
+two	three\four"five
+one\ntwo\tthree\\four\"five
 
 
 
@@ -37,6 +40,9 @@ XML
 
 ا"ب،ت,ث[]
 ابت
+واحد
+اثنان	ثلاثة\أربعة"خمسة
+واحد\nاثنان\tثلاثة\\أربعة\"خمسة
 
 
 

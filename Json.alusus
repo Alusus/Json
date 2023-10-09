@@ -182,4 +182,45 @@ class Json {
     handler this.isArray(): Bool {
         return this.values.getLength() > 0 && this.keys.getLength() == 0;
     }
+
+    function escape(str: CharsPtr): String {
+        def length: ArchInt = 0;
+        def i: ArchInt = 0;
+        while str~cnt(i) != 0 {
+            if str~cnt(i) == '\n'
+            or str~cnt(i) == '\r'
+            or str~cnt(i) == '\t'
+            or str~cnt(i) == '\\'
+            or str~cnt(i) == '"' length += 2
+            else ++length;
+            ++i;
+        }
+        def res: String;
+        res.alloc(length);
+        length = 0;
+        i = 0;
+        while str~cnt(i) != 0 {
+            if str~cnt(i) == '\n' {
+                res.buf~cnt(length++) = '\\';
+                res.buf~cnt(length++) = 'n';
+            } else if str~cnt(i) == '\r' {
+                res.buf~cnt(length++) = '\\';
+                res.buf~cnt(length++) = 'r';
+            } else if str~cnt(i) == '\t' {
+                res.buf~cnt(length++) = '\\';
+                res.buf~cnt(length++) = 't';
+            } else if str~cnt(i) == '\\' {
+                res.buf~cnt(length++) = '\\';
+                res.buf~cnt(length++) = '\\';
+            } else if str~cnt(i) == '"' {
+                res.buf~cnt(length++) = '\\';
+                res.buf~cnt(length++) = '"';
+            } else {
+                res.buf~cnt(length++) = str~cnt(i);
+            }
+            ++i;
+        }
+        res.buf~cnt(length++) = 0;
+        return res;
+    }
 }
