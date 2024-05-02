@@ -31,7 +31,7 @@ class Json {
     }
 
     handler this.parse(str: CharsPtr) {
-        while str~cnt(0) == ' ' or str~cnt(0) == '\n' or str~cnt(0) == '\t' or str~cnt(0) == '\r' str = str + 1;
+        while isSpace(str~cnt(0)) str = str + 1;
         if str~cnt(0) == '{' {
             str = str + 1;
             while str~cnt(0) != 0 and str~cnt(0) != '}' {
@@ -56,13 +56,15 @@ class Json {
             }
         } else {
             def i: ArchInt = 0;
+            def endIndex: ArchInt = 0;
             def level: Int = 0;
             while not isAtEnd(str~cnt(i), level, false) {
                 if str~cnt(i) == '\\' { ++i }
                 else if str~cnt(i) == '"' level = 1 - level;
+                if not isSpace(str~cnt(i)) endIndex = i + 1;
                 ++i;
             }
-            this.rawValue = String(str, i);
+            this.rawValue = String(str, endIndex);
         }
     }
 
@@ -100,6 +102,10 @@ class Json {
     func isAtEnd(c: Char, stackSize: Int, acceptColon: Bool): Bool {
         if c == 0 return true;
         return stackSize == 0 and (c == '}' or c == ']' or c == ',' or (c == ':' and not acceptColon));
+    }
+
+    func isSpace(c: Char): Bool {
+        return c == ' ' or c == '\n' or c == '\t' or c == '\r'
     }
 
     func parseString(input: CharsPtr, len: ArchInt): String {
@@ -166,12 +172,12 @@ class Json {
     }
 
     handler this~cast[Bool] {
-        if this.rawValue.toLowerCase() == "true" return true
+        if this.rawValue == "true" return true
         else return false;
     }
 
     handler this.isNull(): Bool {
-        if this.rawValue.toLowerCase() == "null" return true
+        if this.rawValue == "null" return true
         else return false;
     }
 
