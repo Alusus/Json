@@ -1,5 +1,6 @@
 import "Srl/Array.alusus";
 import "Srl/String.alusus";
+import "Srl/StringBuilder.alusus";
 
 class Json {
     use Srl;
@@ -109,7 +110,7 @@ class Json {
     }
 
     func parseString(input: CharsPtr, len: ArchInt): String {
-        def result: String;
+        def result: StringBuilder(len, (len + 1) / 2);
         def inStr: Bool = false;
         def i: ArchInt;
         for i = 0, i < len, ++i {
