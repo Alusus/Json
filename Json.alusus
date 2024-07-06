@@ -231,3 +231,45 @@ class Json {
         return res;
     }
 }
+
+def JsonStringBuilderMixin: {
+    @format["jpc"]
+    handler this.formatJsonCharsPtr(str: ptr[Char]) {
+        this.append('"');
+        while str~cnt != 0 {
+            // For optimization purposes, we'll batch all non-escaped characters in a single append
+            // operation.
+            def c: Char;
+            def len: ArchInt = 0;
+            while 1 {
+                c = (str + len)~cnt;
+                if c == '\n' or c == '\r' or c == '\t' or c == '\\' or c == '"' or c == 0 break;
+                ++len;
+            }
+            if len > 0 {
+                this.append(str~cast[CharsPtr], len);
+                str = str + len;
+            }
+            if c == 0 break;
+
+            if c == '\n' {
+                this.append("\\n");
+            } else if c == '\r' {
+                this.append("\\r");
+            } else if c == '\t' {
+                this.append("\\t");
+            } else if c == '\\' {
+                this.append("\\\\");
+            } else if c == '"' {
+                this.append("\\\"");
+            }
+            str = str + 1;
+        }
+        this.append('"');
+    }
+
+    @format["js"]
+    handler this.formatJsonCharsPtr(str: String) {
+        this.formatJsonCharsPtr(str.buf);
+    }
+}
