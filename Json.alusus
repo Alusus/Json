@@ -172,6 +172,10 @@ class Json {
         return String.parseFloat(this.rawValue);
     }
 
+    handler this~cast[Float[32]] {
+        return String.parseFloat(this.rawValue);
+    }
+
     handler this~cast[Bool] {
         if this.rawValue == "true" return true
         else return false;
