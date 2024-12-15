@@ -1,6 +1,7 @@
 import "Srl/Array.alusus";
 import "Srl/String.alusus";
 import "Srl/StringBuilder.alusus";
+import "Srl/Nullable.alusus";
 
 class Json {
     use Srl;
@@ -156,29 +157,35 @@ class Json {
         return this.values(i);
     }
 
-    handler this~cast[String] {
-        return parseString(this.rawValue, this.rawValue.getLength());
+    handler this~cast[Nullable[String]] {
+        if this.isNull() return Nullable[String]()
+        else return Nullable[String](parseString(this.rawValue, this.rawValue.getLength()));
     }
 
-    handler this~cast[Int[64]] {
-        return String.parseInt(this.rawValue);
+    handler this~cast[Nullable[Int[64]]] {
+        if this.isNull() return Nullable[Int[64]]()
+        else return Nullable[Int[64]](String.parseInt(this.rawValue));
     }
 
-    handler this~cast[Int[32]] {
-        return String.parseInt(this.rawValue);
+    handler this~cast[Nullable[Int[32]]] {
+        if this.isNull() return Nullable[Int[32]]()
+        else return Nullable[Int[32]](String.parseInt(this.rawValue));
     }
 
-    handler this~cast[Float[64]] {
-        return String.parseFloat(this.rawValue);
+    handler this~cast[Nullable[Float[64]]] {
+        if this.isNull() return Nullable[Float[64]]()
+        else return Nullable[Float[64]](String.parseFloat(this.rawValue));
     }
 
-    handler this~cast[Float[32]] {
-        return String.parseFloat(this.rawValue);
+    handler this~cast[Nullable[Float[32]]] {
+        if this.isNull() return Nullable[Float[32]]()
+        else return Nullable[Float[32]](String.parseFloat(this.rawValue));
     }
 
-    handler this~cast[Bool] {
-        if this.rawValue == "true" return true
-        else return false;
+    handler this~cast[Nullable[Bool]] {
+        if this.isNull() return Nullable[Bool]()
+        else if this.rawValue == "true" return Nullable[Bool](true)
+        else return Nullable[Bool](false);
     }
 
     handler this.isNull(): Bool {
