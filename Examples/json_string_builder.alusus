@@ -1,0 +1,14 @@
+import "Srl/Console";
+import "Srl/StringBuilder";
+import "Apm";
+Apm.importFile("Alusus/Json");
+use Srl;
+
+func testJsonStringBuilderMixin {
+    def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
+    def stringVal: String("test\"quotes'");
+    def charsPtrVal: CharsPtr("test\"quotes'");
+    stringBuilder.format("{ \"name\": %js, \"value\": %jpc }", stringVal, charsPtrVal);
+    Console.print("%s\n", stringBuilder~cast[String].buf);
+}
+testJsonStringBuilderMixin();
