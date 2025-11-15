@@ -240,3 +240,86 @@ handler this.getKey(index: Int): String;
 وظيفة تعيد المفتاح المخزن عند التسلسل المعطى إن كان الجيسون كائنًا. ترجع نصا فارغا إن لم يكن الجيسون
 كائنا أو كان التسلسل خارج المدى.
 
+## مـكون_منشئ_نص_جيسون (JsonStringBuilderMixin)
+
+`مـكون_منشئ_نص_جيسون` هو مكون يمكن استخدامه مع `مـنشئ_نص` لتوفير إمكانيات تنسيق نصوص جيسون.
+يقوم تلقائياً بمعالجة المحارف الخاصة في النصوص عند بناء مخرجات جيسون.
+
+### الاستخدام
+
+<div dir=rtl>
+
+```
+اشمل "مـتم/مـنشئ_نص"؛
+اشمل "مـحا"؛
+مـحا.اشمل_ملف("Alusus/Json"، "جـيسون.أسس")؛
+استخدم مـتم؛
+
+عرّف منشئ_نص: مـنشئ_نص[مـكون_منشئ_نص_جيسون](512، 512)؛
+```
+
+</div>
+
+```
+import "Srl/StringBuilder";
+import "Apm";
+Apm.importFile("Alusus/Json");
+use Srl;
+
+def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
+```
+
+### محددات التنسيق
+
+يوفر المكون محددات تنسيق خاصة لوظيفة `املأ` (`format`):
+
+- `%جن` أو `%js` - تنسيق قيمة `نـص` (`String`) مع معالجة محارف جيسون الخاصة (معالجة علامات الاقتباس، الخطوط المائلة، إلخ.)
+- `%جمح` أو `%jpc` - تنسيق قيمة `مـؤشر_محارف` (`CharsPtr`) مع معالجة محارف جيسون الخاصة
+
+### مثال
+
+<div dir=rtl>
+
+```
+اشمل "مـتم/طـرفية"؛
+اشمل "مـتم/نـص"؛
+اشمل "مـتم/تـطبيق"؛
+اشمل "مـتم/مـنشئ_نص"؛
+اشمل "مـحا"؛
+مـحا.اشمل_ملف("Alusus/Json"، "جـيسون.أسس")؛
+استخدم مـتم؛
+
+دالة اختبر_مكون_منشئ_نص_جيسون {
+    عرّف منشئ_نص: مـنشئ_نص[مـكون_منشئ_نص_جيسون](512، 512)؛
+    عرّف قيمة_نص: نـص("اختبار\"اقتباس'")؛
+    عرّف قيمة_مؤشر_محارف: مـؤشر_محارف("اختبار\"اقتباس'")؛
+    منشئ_نص.املأ("{ \"الاسم\": %جن, \"القيمة\": %جمح }"، قيمة_نص، قيمة_مؤشر_محارف)؛
+    طـرفية.اطبع("%s\ج"، منشئ_نص~مثل[نـص].صوان)؛
+}
+اختبر_مكون_منشئ_نص_جيسون()؛
+```
+
+</div>
+
+```
+import "Srl/Console";
+import "Srl/StringBuilder";
+import "Apm";
+Apm.importFile("Alusus/Json");
+use Srl;
+
+func testJsonStringBuilderMixin {
+    def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
+    def stringVal: String("test\"quotes'");
+    def charsPtrVal: CharsPtr("test\"quotes'");
+    stringBuilder.format("{ \"name\": %js, \"value\": %jpc }", stringVal, charsPtrVal);
+    Console.print("%s\n", stringBuilder~cast[String].buf);
+}
+testJsonStringBuilderMixin();
+```
+
+المخرجات:
+```
+{ "name": "test\"quotes'", "value": "test\"quotes'" }
+```
+

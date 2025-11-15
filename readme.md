@@ -119,3 +119,50 @@ handler this.getKey(index: Int): String;
 Returns the key at at the specified index if the JSON is an object. Returns an empty string if
 the JSON is not an object or the index is out of range.
 
+## JsonStringBuilderMixin
+
+The `JsonStringBuilderMixin` is a mixin that can be used with `StringBuilder` to provide JSON string
+formatting capabilities. It automatically escapes special characters in strings when building JSON output.
+
+### Usage
+
+```
+import "Srl/StringBuilder";
+import "Apm";
+Apm.importFile("Alusus/Json");
+use Srl;
+
+def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
+```
+
+### Format Specifiers
+
+The mixin provides special format specifiers for the `format` method:
+
+- `%js` - Format a `String` value with proper JSON escaping (escapes quotes, backslashes, etc.)
+- `%jpc` - Format a `CharsPtr` value with proper JSON escaping
+
+### Example
+
+```
+import "Srl/Console";
+import "Srl/StringBuilder";
+import "Apm";
+Apm.importFile("Alusus/Json");
+use Srl;
+
+func testJsonStringBuilderMixin {
+    def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
+    def stringVal: String("test\"quotes'");
+    def charsPtrVal: CharsPtr("test\"quotes'");
+    stringBuilder.format("{ \"name\": %js, \"value\": %jpc }", stringVal, charsPtrVal);
+    Console.print("%s\n", stringBuilder~cast[String].buf);
+}
+testJsonStringBuilderMixin();
+```
+
+Output:
+```
+{ "name": "test\"quotes'", "value": "test\"quotes'" }
+```
+
