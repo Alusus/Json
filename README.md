@@ -1,5 +1,5 @@
 # Json
-[[عربي]](readme.ar.md)
+[[عربي]](README.ar.md)
 
 A JSON parser for Alusus Language. For now, this library supports only reading and extracting information from JSON,
 not creating JSONs.
