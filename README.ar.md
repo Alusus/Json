@@ -323,3 +323,9 @@ testJsonStringBuilderMixin();
 { "name": "test\"quotes'", "value": "test\"quotes'" }
 ```
 
+---
+
+## الرخصة
+
+هذا المشروع مرخص بموجب رخصة MIT. راجع `LICENSE` للحصول على التفاصيل.
+

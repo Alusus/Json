@@ -166,3 +166,9 @@ Output:
 { "name": "test\"quotes'", "value": "test\"quotes'" }
 ```
 
+---
+
+## License
+
+This project is licensed under the MIT license. See the `LICENSE` file for details.
+
