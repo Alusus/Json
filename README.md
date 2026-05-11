@@ -10,7 +10,7 @@ You can add it to the project using APM:
 
 ```
 import "Apm";
-Apm.importFile("Alusus/Json");
+Apm.importPackage("Alusus/Json@0.2");
 ```
 
 ## Example
@@ -18,7 +18,7 @@ Apm.importFile("Alusus/Json");
 ```
 import "Srl/Console.alusus"
 import "Apm";
-Apm.importFile("Alusus/Json");
+Apm.importPackage("Alusus/Json@0.2");
 
 use Srl
 func start {
@@ -129,7 +129,7 @@ formatting capabilities. It automatically escapes special characters in strings 
 ```
 import "Srl/StringBuilder";
 import "Apm";
-Apm.importFile("Alusus/Json");
+Apm.importPackage("Alusus/Json@0.2");
 use Srl;
 
 def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
@@ -148,7 +148,7 @@ The mixin provides special format specifiers for the `format` method:
 import "Srl/Console";
 import "Srl/StringBuilder";
 import "Apm";
-Apm.importFile("Alusus/Json");
+Apm.importPackage("Alusus/Json@0.2");
 use Srl;
 
 func testJsonStringBuilderMixin {

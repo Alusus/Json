@@ -1,7 +1,7 @@
 import "Srl/Console";
 import "Srl/StringBuilder";
 import "Apm";
-Apm.importFile("Alusus/Json");
+Apm.importPackage("Alusus/Json@0.2");
 use Srl;
 
 func testJsonStringBuilderMixin {
