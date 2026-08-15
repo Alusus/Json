@@ -275,6 +275,7 @@ def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
 
 - `%جن` أو `%js` - تنسيق قيمة `نـص` (`String`) مع معالجة محارف جيسون الخاصة (معالجة علامات الاقتباس، الخطوط المائلة، إلخ.)
 - `%جمح` أو `%jpc` - تنسيق قيمة `مـؤشر_محارف` (`CharsPtr`) مع معالجة محارف جيسون الخاصة
+- `%جعن` أو `%jns` - تنسيق قيمة `بـعدم[نـص]` (`Nullable[String]`)، وتكتب `null` إن لم تحمل قيمة، وإلا فتعالجها بنفس طريقة `%جن`
 
 ### مثال
 
@@ -285,6 +286,7 @@ def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
 اشمل "مـتم/نـص"؛
 اشمل "مـتم/تـطبيق"؛
 اشمل "مـتم/مـنشئ_نص"؛
+اشمل "مـتم/بـعدم"؛
 اشمل "مـحا"؛
 مـحا.اشمل_حزمة("Alusus/Json@0.2"، "جـيسون.أسس")؛
 استخدم مـتم؛
@@ -293,7 +295,12 @@ def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
     عرّف منشئ_نص: مـنشئ_نص[مـكون_منشئ_نص_جيسون](512، 512)؛
     عرّف قيمة_نص: نـص("اختبار\"اقتباس'")؛
     عرّف قيمة_مؤشر_محارف: مـؤشر_محارف("اختبار\"اقتباس'")؛
-    منشئ_نص.املأ("{ \"الاسم\": %جن, \"القيمة\": %جمح }"، قيمة_نص، قيمة_مؤشر_محارف)؛
+    عرّف قيمة_قابلة_للعدم: بـعدم[نـص]("اختبار\"اقتباس'")؛
+    عرّف قيمة_عدم: بـعدم[نـص]؛
+    منشئ_نص.املأ(
+        "{ \"الاسم\": %جن, \"القيمة\": %جمح, \"قابلة_للعدم\": %جعن, \"عدم\": %جعن }"،
+        قيمة_نص، قيمة_مؤشر_محارف، قيمة_قابلة_للعدم، قيمة_عدم
+    )؛
     طـرفية.اطبع("%s\ج"، منشئ_نص~مثل[نـص].صوان)؛
 }
 اختبر_مكون_منشئ_نص_جيسون()؛
@@ -304,6 +311,7 @@ def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
 ```
 import "Srl/Console";
 import "Srl/StringBuilder";
+import "Srl/Nullable";
 import "Apm";
 Apm.importPackage("Alusus/Json@0.2");
 use Srl;
@@ -312,7 +320,12 @@ func testJsonStringBuilderMixin {
     def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
     def stringVal: String("test\"quotes'");
     def charsPtrVal: CharsPtr("test\"quotes'");
-    stringBuilder.format("{ \"name\": %js, \"value\": %jpc }", stringVal, charsPtrVal);
+    def nullableVal: Nullable[String]("test\"quotes'");
+    def nullVal: Nullable[String];
+    stringBuilder.format(
+        "{ \"name\": %js, \"value\": %jpc, \"nullable\": %jns, \"null\": %jns }",
+        stringVal, charsPtrVal, nullableVal, nullVal
+    );
     Console.print("%s\n", stringBuilder~cast[String].buf);
 }
 testJsonStringBuilderMixin();
@@ -320,7 +333,7 @@ testJsonStringBuilderMixin();
 
 المخرجات:
 ```
-{ "name": "test\"quotes'", "value": "test\"quotes'" }
+{ "name": "test\"quotes'", "value": "test\"quotes'", "nullable": "test\"quotes'", "null": null }
 ```
 
 ---
