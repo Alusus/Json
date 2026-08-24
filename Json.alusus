@@ -280,7 +280,13 @@ def JsonStringBuilderMixin: {
     }
 
     @format["js"]
-    handler this.formatJsonCharsPtr(str: String) {
+    handler this.formatJsonString(str: String) {
         this.formatJsonCharsPtr(str.buf);
+    }
+
+    @format["jns"]
+    handler this.formatJsonNullableString(str: Nullable[String]) {
+        if str.isNull this.append("null")
+        else this.formatJsonCharsPtr(str.buf);
     }
 }

@@ -24,7 +24,7 @@ XML
 
 >>>>>> json_string_builder.alusus
 
-{ "name": "test\"quotes'", "value": "test\"quotes'" }
+{ "name": "test\"quotes'", "value": "test\"quotes'", "nullable": "test\"quotes'", "null": null }
 
 
 
@@ -54,7 +54,7 @@ XML
 
 >>>>>> منشئ_نص_جيسون.أسس
 
-{ "الاسم": "اختبار\"اقتباس'", "القيمة": "اختبار\"اقتباس'" }
+{ "الاسم": "اختبار\"اقتباس'", "القيمة": "اختبار\"اقتباس'", "قابلة_للعدم": "اختبار\"اقتباس'", "عدم": null }
 
 
 

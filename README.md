@@ -141,12 +141,14 @@ The mixin provides special format specifiers for the `format` method:
 
 - `%js` - Format a `String` value with proper JSON escaping (escapes quotes, backslashes, etc.)
 - `%jpc` - Format a `CharsPtr` value with proper JSON escaping
+- `%jns` - Format a `Nullable[String]` value, writing `null` if it has no value, otherwise applying the same JSON escaping as `%js`
 
 ### Example
 
 ```
 import "Srl/Console";
 import "Srl/StringBuilder";
+import "Srl/Nullable";
 import "Apm";
 Apm.importPackage("Alusus/Json@0.2");
 use Srl;
@@ -155,7 +157,12 @@ func testJsonStringBuilderMixin {
     def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
     def stringVal: String("test\"quotes'");
     def charsPtrVal: CharsPtr("test\"quotes'");
-    stringBuilder.format("{ \"name\": %js, \"value\": %jpc }", stringVal, charsPtrVal);
+    def nullableVal: Nullable[String]("test\"quotes'");
+    def nullVal: Nullable[String];
+    stringBuilder.format(
+        "{ \"name\": %js, \"value\": %jpc, \"nullable\": %jns, \"null\": %jns }",
+        stringVal, charsPtrVal, nullableVal, nullVal
+    );
     Console.print("%s\n", stringBuilder~cast[String].buf);
 }
 testJsonStringBuilderMixin();
@@ -163,7 +170,7 @@ testJsonStringBuilderMixin();
 
 Output:
 ```
-{ "name": "test\"quotes'", "value": "test\"quotes'" }
+{ "name": "test\"quotes'", "value": "test\"quotes'", "nullable": "test\"quotes'", "null": null }
 ```
 
 ---
