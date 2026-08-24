@@ -1,8 +1,9 @@
 # Json
+
 [[عربي]](README.ar.md)
 
-A JSON parser for Alusus Language. For now, this library supports only reading and extracting information from JSON,
-not creating JSONs.
+A JSON library for Alusus Language. It supports reading and extracting information from JSON, serializing
+objects to JSON, and parsing JSON directly into typed objects.
 
 ## Adding to the Project
 
@@ -118,6 +119,47 @@ handler this.getKey(index: Int): String;
 ```
 Returns the key at at the specified index if the JSON is an object. Returns an empty string if
 the JSON is not an object or the index is out of range.
+
+### stringfy
+
+```
+func stringfy [T: type] (obj: ref[T]): String;
+```
+
+Serializes an object's fields to a JSON string. Supported field types are `Nullable[T]`,
+`Array[Nullable[T]]`, `Map[String, Nullable[T]]`, and `Map[String, Array[Nullable[T]]]`, where `T`
+is `String`, `Bool`, `Int[32]`, `Int[64]`, `Float[32]`, or `Float[64]`. An unset `Nullable` value is
+serialized as `null`.
+
+```
+class Person {
+    def name: Nullable[String];
+    def tags: Array[Nullable[String]];
+}
+
+def person: Person();
+person.name = Nullable[String](String("Sarmed"));
+person.tags.add(Nullable[String](String("admin")));
+
+Console.print("%s\n", Json.stringfy[Person](person).buf);
+// Output: {"name":"Sarmed","tags":["admin"]}
+```
+
+### parse
+
+```
+func parse [T: type] (obj: ref[T], str: CharsPtr);
+```
+
+Populates an existing object's fields from a JSON string, matching each JSON key against the
+object's field names. Supports the same field types as `stringfy`.
+
+```
+def person: Person();
+Json.parse[Person](person, "{\"name\": \"Sarmed\", \"tags\": [\"admin\"]}");
+Console.print("%s\n", person.name.value.buf);
+// Output: Sarmed
+```
 
 ## JsonStringBuilderMixin
 
