@@ -17,9 +17,10 @@ class Person {
     def tags : Array[Nullable[String]];
     def scores : Map[String, Nullable[String]];
     def data : Map[String, Array[Nullable[String]]];
+    def scoresByRound : Array[Map[String, Nullable[String]]];
 }
 
-def jsonStr : CharsPtr = "{\"name\": \"Sarmed\", \"tags\": [\"admin\", null], \"scores\": {\"math\": \"A\", \"art\": null}, \"data\": {\"languages\": [\"Alusus\", \"C++\"]}}";
+def jsonStr : CharsPtr = "{\"name\": \"Sarmed\", \"tags\": [\"admin\", null], \"scores\": {\"math\": \"A\", \"art\": null}, \"data\": {\"languages\": [\"Alusus\", \"C++\"]}, \"scoresByRound\": [{\"math\": \"A\", \"art\": null}, {\"gym\": \"B\"}]}";
 
 def person : Person();
 Json.parse[Person](person, jsonStr);
@@ -49,6 +50,18 @@ for i = 0, i < person.data.getLength(), ++i {
     for j = 0, j < arr.getLength(), ++j {
         if arr(j).isNull Console.print("null ")
         else Console.print("%s ", arr(j).value.buf);
+    }
+    Console.print("\n");
+}
+
+Console.print("scoresByRound:\n");
+for i = 0, i < person.scoresByRound.getLength(), ++i {
+    Console.print("  round %d: ", i);
+    def round : Map[String, Nullable[String]](person.scoresByRound(i));
+    def j : Int;
+    for j = 0, j < round.getLength(), ++j {
+        if round.valAt(j).isNull Console.print("%s=null ", round.keyAt(j).buf)
+        else Console.print("%s=%s ", round.keyAt(j).buf, round.valAt(j).value.buf);
     }
     Console.print("\n");
 }

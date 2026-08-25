@@ -1,4 +1,4 @@
-@merge module Json {
+@merge class Json {
     function _isSupportedJsonFieldType (varType: ref[Spp.Ast.Type]) : Bool {
         @shared def nullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Srl.String]));
         @shared def nullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Bool]));
@@ -24,6 +24,12 @@
         @shared def mapArrNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Int[64]]]]));
         @shared def mapArrNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Float[32]]]]));
         @shared def mapArrNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Float[64]]]]));
+        @shared def arrMapNullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Srl.String]]]));
+        @shared def arrMapNullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Bool]]]));
+        @shared def arrMapNullableInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[32]]]]));
+        @shared def arrMapNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[64]]]]));
+        @shared def arrMapNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[32]]]]));
+        @shared def arrMapNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[64]]]]));
         return varType~ptr == nullableStrType~ptr
             or varType~ptr == nullableBoolType~ptr
             or varType~ptr == nullableInt32Type~ptr
@@ -47,7 +53,13 @@
             or varType~ptr == mapArrNullableInt32Type~ptr
             or varType~ptr == mapArrNullableInt64Type~ptr
             or varType~ptr == mapArrNullableFloat32Type~ptr
-            or varType~ptr == mapArrNullableFloat64Type~ptr    }
+            or varType~ptr == mapArrNullableFloat64Type~ptr
+            or varType~ptr == arrMapNullableStrType~ptr
+            or varType~ptr == arrMapNullableBoolType~ptr
+            or varType~ptr == arrMapNullableInt32Type~ptr
+            or varType~ptr == arrMapNullableInt64Type~ptr
+            or varType~ptr == arrMapNullableFloat32Type~ptr
+            or varType~ptr == arrMapNullableFloat64Type~ptr     }
     
     function _getRefWrapperContentType (varType: ref[Spp.Ast.Type]) : ref[Spp.Ast.Type] {
         if varType.getMyTypeInfo().typeName != "UserType" return nullRef[Spp.Ast.Type];
@@ -83,6 +95,12 @@
         @shared def mapArrNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Int[64]]]]));
         @shared def mapArrNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Float[32]]]]));
         @shared def mapArrNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Float[64]]]]));
+        @shared def arrMapNullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Srl.String]]]));
+        @shared def arrMapNullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Bool]]]));
+        @shared def arrMapNullableInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[32]]]]));
+        @shared def arrMapNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[64]]]]));
+        @shared def arrMapNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[32]]]]));
+        @shared def arrMapNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[64]]]]));
 
         def vars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(T~ast);
 
@@ -125,7 +143,13 @@
             or varType~ptr == arrNullableInt32Type~ptr
             or varType~ptr == arrNullableInt64Type~ptr
             or varType~ptr == arrNullableFloat32Type~ptr
-            or varType~ptr == arrNullableFloat64Type~ptr {
+            or varType~ptr == arrNullableFloat64Type~ptr
+            or varType~ptr == arrMapNullableStrType~ptr
+            or varType~ptr == arrMapNullableBoolType~ptr
+            or varType~ptr == arrMapNullableInt32Type~ptr
+            or varType~ptr == arrMapNullableInt64Type~ptr
+            or varType~ptr == arrMapNullableFloat32Type~ptr
+            or varType~ptr == arrMapNullableFloat64Type~ptr {
                 if isWrapperRef {
                     Spp.astMgr.buildAst(
                         (ast sb.appendJsonValue(obj.varName.obj)),

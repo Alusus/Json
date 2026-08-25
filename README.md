@@ -127,9 +127,9 @@ func stringfy [T: type] (obj: ref[T]): String;
 ```
 
 Serializes an object's fields to a JSON string. Supported field types are `Nullable[T]`,
-`Array[Nullable[T]]`, `Map[String, Nullable[T]]`, and `Map[String, Array[Nullable[T]]]`, where `T`
-is `String`, `Bool`, `Int[32]`, `Int[64]`, `Float[32]`, or `Float[64]`. An unset `Nullable` value is
-serialized as `null`.
+`Array[Nullable[T]]`, `Map[String, Nullable[T]]`, `Map[String, Array[Nullable[T]]]`, and
+`Array[Map[String, Nullable[T]]]`, where `T` is `String`, `Bool`, `Int[32]`, `Int[64]`, `Float[32]`,
+or `Float[64]`. An unset `Nullable` value is serialized as `null`.
 
 ```
 class Person {
