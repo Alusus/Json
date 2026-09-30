@@ -404,6 +404,35 @@ def JsonStringBuilderMixin: {
         else this.formatJsonCharsPtr(v);
     }
 
+    handler this.appendJsonValue(v: CharsPtr) {
+        this.appendJsonValue(v~cast[ptr[Char]]);
+    }
+
+    handler this.appendJsonValue(v: String) {
+        this.formatJsonCharsPtr(v.buf);
+    }
+
+    handler this.appendJsonValue(v: Int[32]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Int[64]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Float[32]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Float[64]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Bool) {
+        if v this.append("true")
+        else this.append("false");
+    }
+
     handler this.appendJsonValue(v: Nullable[String]) {
         if v.isNull this.append("null")
         else this.appendJsonValue(v.value);
@@ -551,5 +580,101 @@ def JsonStringBuilderMixin: {
 
     handler this.appendJsonValue(v: Array[Map[String, Nullable[Float[64]]]]) {
         StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Nullable[Float[64]]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[String]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[String](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Bool]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Bool](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Int[32]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Int[32]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Int[64]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Int[64]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Float[32]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Float[32]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Float[64]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Float[64]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, String]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[String](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Bool]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Bool](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Int[32]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Int[32]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Int[64]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Int[64]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Float[32]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Float[32]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Float[64]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Float[64]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Array[String]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[String]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Array[Bool]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Bool]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Array[Int[32]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Int[32]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Array[Int[64]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Int[64]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Array[Float[32]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Float[32]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Map[String, Array[Float[64]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Float[64]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Map[String, String]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, String]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Map[String, Bool]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Bool]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Map[String, Int[32]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Int[32]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Map[String, Int[64]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Int[64]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Map[String, Float[32]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Float[32]]](this, v);
+    }
+
+    handler this.appendJsonValue(v: Array[Map[String, Float[64]]]) {
+        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Float[64]]](this, v);
     }
 }
