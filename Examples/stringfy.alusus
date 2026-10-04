@@ -12,19 +12,24 @@ Apm.importPackage("Alusus/Json@0.2");
 use Srl;
 use Spp;
 
+class Name [T : type] {
+    def firstName : Nullable[T];
+    def secondName : Nullable[T];
+}
 class Person {
-    def name : Nullable[String];
+    def z : Int;
+    def name : Name[String];
     def tags : Array[Nullable[String]];
     def scores : Map[String, Nullable[String]];
     def data : Map[String, Array[Nullable[String]]];
+    def factorial : function (i:Int) => Int {return 1};
     def scoresByRound : Array[Map[String, Nullable[String]]];
 }
 
 def person : Person();
-person.name = Nullable[String](String("Sarmed"));
 
+person.name.firstName =  Nullable[String](String("Sarmed"));
 person.tags.add(Nullable[String](String("admin")));
-
 person.scores.set(String("math"), Nullable[String](String("A")));
 
 def langs : Array[Nullable[String]];

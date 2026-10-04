@@ -8,25 +8,31 @@ import "Srl/Memory";
 import "Srl/Nullable";
 import "Apm";
 Apm.importPackage("Alusus/Json@0.2");
-
 use Srl;
 use Spp;
 
+class Name [T : type] {
+    def firstName : Nullable[T];
+    def secondName : Nullable[T];
+}
+
 class Person {
-    def name : Nullable[String];
+    def name : Name[String];
     def tags : Array[Nullable[String]];
     def scores : Map[String, Nullable[String]];
     def data : Map[String, Array[Nullable[String]]];
     def scoresByRound : Array[Map[String, Nullable[String]]];
 }
 
-def jsonStr : CharsPtr = "{\"name\": \"Sarmed\", \"tags\": [\"admin\", null], \"scores\": {\"math\": \"A\", \"art\": null}, \"data\": {\"languages\": [\"Alusus\", \"C++\"]}, \"scoresByRound\": [{\"math\": \"A\", \"art\": null}, {\"gym\": \"B\"}]}";
+def jsonStr : CharsPtr = "{\"name\": {\"firstName\": \"Sarmed\", \"secondName\": null}, \"tags\": [\"admin\", null], \"scores\": {\"math\": \"A\", \"art\": null}, \"data\": {\"languages\": [\"Alusus\", \"C++\"]}, \"scoresByRound\": [{\"math\": \"A\", \"art\": null}, {\"gym\": \"B\"}]}";
 
 def person : Person();
 Json.parse[Person](person, jsonStr);
 
-if person.name.isNull Console.print("name: null\n")
-else Console.print("name: %s\n", person.name.value.buf);
+if person.name.firstName.isNull Console.print("name.firstName: null\n")
+else Console.print("name.firstName: %s\n", person.name.firstName.value.buf);
+if person.name.secondName.isNull Console.print("name.secondName: null\n")
+else Console.print("name.secondName: %s\n", person.name.secondName.value.buf);
 
 def i : Int;
 Console.print("tags: ");

@@ -2,7 +2,7 @@ import "Srl/Array.alusus";
 import "Srl/String.alusus";
 import "Srl/StringBuilder.alusus";
 import "Srl/Nullable.alusus";
-
+import "Srl/Map.alusus";
 class Json {
     use Srl;
     def keys: Array[String];
@@ -157,113 +157,6 @@ class Json {
         return this.values(i);
     }
 
-    func _castArrayOfNullable [T: type] (json: ref[Json]): Array[Nullable[T]] {
-        if not json.isArray() return Array[Nullable[T]]();
-
-        def result : Array[Nullable[T]];
-        def i : Int;
-
-        for i = 0, i < json.values.getLength(), ++i {
-            result.add(json(i)~cast[Nullable[T]]);
-        }
-        return result;
-    }
-
-    func _castMapOfNullable [T: type] (json: ref[Json]): Map[String, Nullable[T]] {
-        if not json.isObject() return Map[String, Nullable[T]]();
-
-        def result : Map[String, Nullable[T]];
-        def i : Int;
-
-        for i = 0, i < json.keys.getLength(), ++i {
-            result.set(json.keys(i), json.values(i)~cast[Nullable[T]]);
-        }
-        return result;
-    }
-
-    func _castMapOfArrayNullable [T: type] (json: ref[Json]): Map[String, Array[Nullable[T]]] {
-        if not json.isObject() return Map[String, Array[Nullable[T]]]();
-
-        def result : Map[String, Array[Nullable[T]]];
-        def i : Int;
-
-        for i = 0, i < json.keys.getLength(), ++i {
-            result.set(json.keys(i), json.values(i)~cast[Array[Nullable[T]]]);
-        }
-        return result;
-    }
-
-    func _castArrayOfMapNullable [T: type] (json: ref[Json]): Array[Map[String, Nullable[T]]] {
-        if not json.isArray() return Array[Map[String, Nullable[T]]]();
-
-        def result : Array[Map[String, Nullable[T]]];
-        def i : Int;
-
-        for i = 0, i < json.values.getLength(), ++i {
-            result.add(json(i)~cast[Map[String, Nullable[T]]]);
-        }
-        return result;
-    }
-
-    handler this~cast[Array[Nullable[String]]] { return Json._castArrayOfNullable[String](this); }
-    handler this~cast[Array[Nullable[Int[64]]]] { return Json._castArrayOfNullable[Int[64]](this); }
-    handler this~cast[Array[Nullable[Int[32]]]] { return Json._castArrayOfNullable[Int[32]](this); }
-    handler this~cast[Array[Nullable[Float[64]]]] { return Json._castArrayOfNullable[Float[64]](this); }
-    handler this~cast[Array[Nullable[Float[32]]]] { return Json._castArrayOfNullable[Float[32]](this); }
-    handler this~cast[Array[Nullable[Bool]]] { return Json._castArrayOfNullable[Bool](this); }
-
-    handler this~cast[Map[String, Nullable[String]]] { return Json._castMapOfNullable[String](this); }
-    handler this~cast[Map[String, Nullable[Int[64]]]] { return Json._castMapOfNullable[Int[64]](this); }
-    handler this~cast[Map[String, Nullable[Int[32]]]] { return Json._castMapOfNullable[Int[32]](this); }
-    handler this~cast[Map[String, Nullable[Float[64]]]] { return Json._castMapOfNullable[Float[64]](this); }
-    handler this~cast[Map[String, Nullable[Float[32]]]] { return Json._castMapOfNullable[Float[32]](this); }
-    handler this~cast[Map[String, Nullable[Bool]]] { return Json._castMapOfNullable[Bool](this); }
-
-    handler this~cast[Map[String, Array[Nullable[String]]]] { return Json._castMapOfArrayNullable[String](this); }
-    handler this~cast[Map[String, Array[Nullable[Int[64]]]]] { return Json._castMapOfArrayNullable[Int[64]](this); }
-    handler this~cast[Map[String, Array[Nullable[Int[32]]]]] { return Json._castMapOfArrayNullable[Int[32]](this); }
-    handler this~cast[Map[String, Array[Nullable[Float[64]]]]] { return Json._castMapOfArrayNullable[Float[64]](this); }
-    handler this~cast[Map[String, Array[Nullable[Float[32]]]]] { return Json._castMapOfArrayNullable[Float[32]](this); }
-    handler this~cast[Map[String, Array[Nullable[Bool]]]] { return Json._castMapOfArrayNullable[Bool](this); }
-
-    handler this~cast[Array[Map[String, Nullable[String]]]] { return Json._castArrayOfMapNullable[String](this); }
-    handler this~cast[Array[Map[String, Nullable[Int[64]]]]] { return Json._castArrayOfMapNullable[Int[64]](this); }
-    handler this~cast[Array[Map[String, Nullable[Int[32]]]]] { return Json._castArrayOfMapNullable[Int[32]](this); }
-    handler this~cast[Array[Map[String, Nullable[Float[64]]]]] { return Json._castArrayOfMapNullable[Float[64]](this); }
-    handler this~cast[Array[Map[String, Nullable[Float[32]]]]] { return Json._castArrayOfMapNullable[Float[32]](this); }
-    handler this~cast[Array[Map[String, Nullable[Bool]]]] { return Json._castArrayOfMapNullable[Bool](this); }
-
-    handler this~cast[Nullable[String]] {
-        if this.isNull() return Nullable[String]()
-        else return Nullable[String](parseString(this.rawValue, this.rawValue.getLength()));
-    }
-
-    handler this~cast[Nullable[Int[64]]] {
-        if this.isNull() return Nullable[Int[64]]()
-        else return Nullable[Int[64]](String.parseInt(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Int[32]]] {
-        if this.isNull() return Nullable[Int[32]]()
-        else return Nullable[Int[32]](String.parseInt(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Float[64]]] {
-        if this.isNull() return Nullable[Float[64]]()
-        else return Nullable[Float[64]](String.parseFloat(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Float[32]]] {
-        if this.isNull() return Nullable[Float[32]]()
-        else return Nullable[Float[32]](String.parseFloat(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Bool]] {
-        if this.isNull() return Nullable[Bool]()
-        else if this.rawValue == "true" return Nullable[Bool](true)
-        else return Nullable[Bool](false);
-    }
-
     handler this.isNull(): Bool {
         if this.rawValue == "null" return true
         else return false;
@@ -332,24 +225,17 @@ class Json {
 
     func parse [T : type] (obj : ref[T] , str: CharsPtr) {
         def json : Json(str);
+        parse[T](obj, json);
+    }
+
+    func parse [T : type] (obj : ref[T] , json: ref[Json]) {
         preprocess {
-            def vars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(T~ast);
-            def i : Int;
-            for i = 0, i < vars.getLength(), ++i {
-                def fieldName: String = Spp.astMgr.getDefinitionName(vars(i));
-                Spp.astMgr.insertAst(
-                    (ast {
-                        obj.fieldIdent = json(key);
-                    }),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]()
-                        .set(String("fieldIdent"), Core.Data.Ast.Identifier(fieldName))
-                        .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
-                )
-            }
+            _generateJsonParse[T]()
         }
     }
 }
 
+import "casts.alusus";
 import "ast_helpers.alusus";
 
 def JsonStringBuilderMixin: {
@@ -464,217 +350,217 @@ def JsonStringBuilderMixin: {
         else this.append("false");
     }
     
-    func appendJsonArray [T: type] (sb: ref[StringBuilder[JsonStringBuilderMixin]], arr: ref[Array[T]]) {
-        sb.append('[');
+    handler [T: type] this.appendJsonArray(arr: ref[Array[T]]) {
+        this.append('[');
         def i: Int;
         for i = 0, i < arr.getLength(), ++i {
-            if i > 0 sb.append(',');
-            sb.appendJsonValue(arr(i));
+            if i > 0 this.append(',');
+            this.appendJsonValue(arr(i));
         }
-        sb.append(']');
+        this.append(']');
     }
 
-    func appendJsonMap [T2: type] (sb: ref[StringBuilder[JsonStringBuilderMixin]], m: ref[Map[String, T2]]) {
-        sb.append('{');
+    handler [T: type] this.appendJsonMap(m: ref[Map[String, T]]) {
+        this.append('{');
         def i: Int;
         for i = 0, i < m.getLength(), ++i {
-            if i > 0 sb.append(',');
-            sb.appendJsonValue(m.keyAt(i));
-            sb.append(':');
-            sb.appendJsonValue(m.valAt(i));
+            if i > 0 this.append(',');
+            this.appendJsonValue(m.keyAt(i));
+            this.append(':');
+            this.appendJsonValue(m.valAt(i));
         }
-        sb.append('}');
+        this.append('}');
     }
 
     handler this.appendJsonValue(v: Array[Nullable[String]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Nullable[String]](this, v);
+        this.appendJsonArray[Nullable[String]](v);
     }
 
     handler this.appendJsonValue(v: Array[Nullable[Bool]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Nullable[Bool]](this, v);
+        this.appendJsonArray[Nullable[Bool]](v);
     }
 
     handler this.appendJsonValue(v: Array[Nullable[Int[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Nullable[Int[32]]](this, v);
+        this.appendJsonArray[Nullable[Int[32]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Nullable[Int[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Nullable[Int[64]]](this, v);
+        this.appendJsonArray[Nullable[Int[64]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Nullable[Float[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Nullable[Float[32]]](this, v);
+        this.appendJsonArray[Nullable[Float[32]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Nullable[Float[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Nullable[Float[64]]](this, v);
+        this.appendJsonArray[Nullable[Float[64]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Nullable[String]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Nullable[String]](this, v);
+        this.appendJsonMap[Nullable[String]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Nullable[Bool]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Nullable[Bool]](this, v);
+        this.appendJsonMap[Nullable[Bool]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Nullable[Int[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Nullable[Int[32]]](this, v);
+        this.appendJsonMap[Nullable[Int[32]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Nullable[Int[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Nullable[Int[64]]](this, v);
+        this.appendJsonMap[Nullable[Int[64]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Nullable[Float[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Nullable[Float[32]]](this, v);
+        this.appendJsonMap[Nullable[Float[32]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Nullable[Float[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Nullable[Float[64]]](this, v);
+        this.appendJsonMap[Nullable[Float[64]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Nullable[String]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Nullable[String]]](this, v);
+        this.appendJsonMap[Array[Nullable[String]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Nullable[Bool]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Nullable[Bool]]](this, v);
+        this.appendJsonMap[Array[Nullable[Bool]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Nullable[Int[32]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Nullable[Int[32]]]](this, v);
+        this.appendJsonMap[Array[Nullable[Int[32]]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Nullable[Int[64]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Nullable[Int[64]]]](this, v);
+        this.appendJsonMap[Array[Nullable[Int[64]]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Nullable[Float[32]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Nullable[Float[32]]]](this, v);
+        this.appendJsonMap[Array[Nullable[Float[32]]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Nullable[Float[64]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Nullable[Float[64]]]](this, v);
+        this.appendJsonMap[Array[Nullable[Float[64]]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Nullable[String]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Nullable[String]]](this, v);
+        this.appendJsonArray[Map[String, Nullable[String]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Nullable[Bool]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Nullable[Bool]]](this, v);
+        this.appendJsonArray[Map[String, Nullable[Bool]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Nullable[Int[32]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Nullable[Int[32]]]](this, v);
+        this.appendJsonArray[Map[String, Nullable[Int[32]]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Nullable[Int[64]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Nullable[Int[64]]]](this, v);
+        this.appendJsonArray[Map[String, Nullable[Int[64]]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Nullable[Float[32]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Nullable[Float[32]]]](this, v);
+        this.appendJsonArray[Map[String, Nullable[Float[32]]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Nullable[Float[64]]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Nullable[Float[64]]]](this, v);
+        this.appendJsonArray[Map[String, Nullable[Float[64]]]](v);
     }
 
     handler this.appendJsonValue(v: Array[String]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[String](this, v);
+        this.appendJsonArray[String](v);
     }
 
     handler this.appendJsonValue(v: Array[Bool]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Bool](this, v);
+        this.appendJsonArray[Bool](v);
     }
 
     handler this.appendJsonValue(v: Array[Int[32]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Int[32]](this, v);
+        this.appendJsonArray[Int[32]](v);
     }
 
     handler this.appendJsonValue(v: Array[Int[64]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Int[64]](this, v);
+        this.appendJsonArray[Int[64]](v);
     }
 
     handler this.appendJsonValue(v: Array[Float[32]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Float[32]](this, v);
+        this.appendJsonArray[Float[32]](v);
     }
 
     handler this.appendJsonValue(v: Array[Float[64]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Float[64]](this, v);
+        this.appendJsonArray[Float[64]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, String]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[String](this, v);
+        this.appendJsonMap[String](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Bool]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Bool](this, v);
+        this.appendJsonMap[Bool](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Int[32]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Int[32]](this, v);
+        this.appendJsonMap[Int[32]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Int[64]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Int[64]](this, v);
+        this.appendJsonMap[Int[64]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Float[32]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Float[32]](this, v);
+        this.appendJsonMap[Float[32]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Float[64]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Float[64]](this, v);
+        this.appendJsonMap[Float[64]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[String]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[String]](this, v);
+        this.appendJsonMap[Array[String]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Bool]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Bool]](this, v);
+        this.appendJsonMap[Array[Bool]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Int[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Int[32]]](this, v);
+        this.appendJsonMap[Array[Int[32]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Int[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Int[64]]](this, v);
+        this.appendJsonMap[Array[Int[64]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Float[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Float[32]]](this, v);
+        this.appendJsonMap[Array[Float[32]]](v);
     }
 
     handler this.appendJsonValue(v: Map[String, Array[Float[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonMap[Array[Float[64]]](this, v);
+        this.appendJsonMap[Array[Float[64]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, String]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, String]](this, v);
+        this.appendJsonArray[Map[String, String]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Bool]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Bool]](this, v);
+        this.appendJsonArray[Map[String, Bool]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Int[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Int[32]]](this, v);
+        this.appendJsonArray[Map[String, Int[32]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Int[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Int[64]]](this, v);
+        this.appendJsonArray[Map[String, Int[64]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Float[32]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Float[32]]](this, v);
+        this.appendJsonArray[Map[String, Float[32]]](v);
     }
 
     handler this.appendJsonValue(v: Array[Map[String, Float[64]]]) {
-        StringBuilder[JsonStringBuilderMixin].appendJsonArray[Map[String, Float[64]]](this, v);
+        this.appendJsonArray[Map[String, Float[64]]](v);
     }
 }

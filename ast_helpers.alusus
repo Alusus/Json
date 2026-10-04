@@ -124,18 +124,54 @@
             or varType~ptr == arrMapFloat64Type~ptr;
     }
     
-    function _getRefWrapperContentType (varType: ref[Spp.Ast.Type]) : ref[Spp.Ast.Type] {
+    // True for instances of the smart reference templates (SrdRef, UnqRef, WkRef)
+    function _isSupportedSharedRef (varType: ref[Spp.Ast.Type]) : Bool {
+        @shared def srdRefTemplate: ref[Core.Basic.TiObject](Root.Srl.SrdRef~ast);
+        @shared def unqRefTemplate: ref[Core.Basic.TiObject](Root.Srl.UnqRef~ast);
+        @shared def wkRefTemplate: ref[Core.Basic.TiObject](Root.Srl.WkRef~ast);
+        if varType.getMyTypeInfo().typeName != "UserType" return false;
+        def instanceScope: ref[Core.Data.Node](varType.owner);
+        if instanceScope~ptr == 0 or instanceScope.owner~ptr == 0 return false;
+        def template: ref[Core.Basic.TiObject](instanceScope.owner);
+        return template~ptr == srdRefTemplate~ptr
+            or template~ptr == unqRefTemplate~ptr
+            or template~ptr == wkRefTemplate~ptr;
+    }
+
+    // Returns the type a smart reference points to. Expects a type accepted by _isSupportedSharedRef;
+    // all of them hold their content in an `obj` reference field.
+    function _getSharedRefContentType (varType: ref[Spp.Ast.Type]) : ref[Spp.Ast.Type] {
         def innerVars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(varType);
         def k: Int;
         for k = 0, k < innerVars.getLength(), ++k {
             if Spp.astMgr.getDefinitionName(innerVars(k)) == "obj" {
-                def objType: ref[Spp.Ast.Type](Spp.astMgr.traceType(innerVars(k)));
-                if objType.getMyTypeInfo().typeName == "ReferenceType" {
-                    return Spp.astMgr.tryGetDeepReferenceContentType(objType);
-                }
+                return Spp.astMgr.tryGetDeepReferenceContentType(Spp.astMgr.traceType(innerVars(k)));
             }
         }
         return nullRef[Spp.Ast.Type];
+    }
+
+    // Builds the code that writes `target` (e.g. `obj.x` or `obj.x.obj`) as a JSON value: a nested stringfy call
+    // for classes, appendJsonValue for everything else.
+    function _buildStringifyValueAst (
+        target: ref[Core.Basic.TiObject], valueType: ref[Spp.Ast.Type], isNestedClass: Bool,
+        result: ref[SrdRef[Core.Basic.TiObject]]
+    ) {
+        if isNestedClass {
+            Spp.astMgr.buildAst(
+                (ast sb.append(stringfy[fieldType](target).buf)),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("target"), target)
+                    .set(String("fieldType"), Core.Data.Ast.Passage(valueType)),
+                result
+            );
+        } else {
+            Spp.astMgr.buildAst(
+                (ast sb.appendJsonValue(target)),
+                Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("target"), target),
+                result
+            );
+        }
     }
 
     function _generateJsonStringify [T : type] () {
@@ -146,28 +182,29 @@
         for i = 0, i < vars.getLength(), ++i {
             def varType: ref[Spp.Ast.Type](Spp.astMgr.traceType(vars(i)));
             def isRef: Bool(false);  
-            def isWrapperRef: Bool(false);
+            def isSmartReference: Bool(false);
             def isNestedClass: Bool(false); 
 
             if not _isSupportedType(varType) {
                 if varType.getMyTypeInfo().typeName == "ReferenceType" {
                     varType~ptr = Spp.astMgr.tryGetDeepReferenceContentType(varType)~ptr;
                     isRef = true;
+                } else if _isSupportedSharedRef(varType) {
+                    varType~ptr = _getSharedRefContentType(varType)~ptr;
+                    isSmartReference = true;
                 } else if varType.getMyTypeInfo().typeName == "UserType" {
-                    def wrappedType: ref[Spp.Ast.Type](_getRefWrapperContentType(varType));
-                    if wrappedType~ptr != 0 {
-                        varType~ptr = wrappedType~ptr;
-                        isWrapperRef = true;
-                    } else {
-                        isNestedClass = true;
-                    }
+                    isNestedClass = true;
                 } else {
                     Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
                     continue;
                 }
                 if not isNestedClass and not _isSupportedType(varType) {
-                    Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
-                    continue;
+                    // A reference (ref, SrdRef...) to a class is serialized as a nested object.
+                    if not _isNestedClassType(varType) {
+                        Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
+                        continue;
+                    }
+                    isNestedClass = true;
                 }
             }
 
@@ -177,62 +214,40 @@
                Spp.astMgr.insertAst(ast sb.append(','));
             }
 
-            def valueAst: SrdRef[Core.Basic.TiObject];
-
-            if isNestedClass {
+            // The expression to read the value from: the field itself, or the content of a smart reference.
+            def targetAst: SrdRef[Core.Basic.TiObject];
+            if isSmartReference {
                 Spp.astMgr.buildAst(
-                    (ast sb.append(stringfy[fieldType](obj.varName).buf)),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]()
-                        .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
-                        .set(String("fieldType"), Core.Data.Ast.Passage(varType)),
-                    valueAst
-                );
-            } else if isWrapperRef {
-                Spp.astMgr.buildAst(
-                    (ast sb.appendJsonValue(obj.varName.obj)),
+                    (ast obj.varName.obj),
                     Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
-                    valueAst
+                    targetAst
                 );
             } else {
                 Spp.astMgr.buildAst(
-                    (ast sb.appendJsonValue(obj.varName)),
+                    (ast obj.varName),
                     Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
-                    valueAst
+                    targetAst
                 );
             }
-            
-            if isRef or isWrapperRef {
-                if isWrapperRef {
-                    Spp.astMgr.insertAst(
-                        (ast {
-                            sb.format("\"{{key}}\":");
-                            if obj.varName.obj~ptr == 0 {
-                                sb.append("null");
-                            } else {
-                                valueCode
-                            }
-                        }),
-                        Map[Srl.String, ref[Core.Basic.TiObject]]()
-                            .set(String("key"), Core.Basic.TiStr(fieldName))
-                            .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
-                            .set(String("valueCode"), valueAst.obj)
-                    );
-                } else {
-                    Spp.astMgr.insertAst(
-                        (ast {
-                            sb.format("\"{{key}}\":");
-                            if obj.varName~ptr == 0 {
-                                sb.append("null");
-                            } else {
-                                valueCode
-                            }
-                        }),
-                        Map[Srl.String, ref[Core.Basic.TiObject]]()
-                            .set(String("key"), Core.Basic.TiStr(fieldName))
-                            .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
-                            .set(String("valueCode"), valueAst.obj)
-                    );
-                }
+
+            def valueAst: SrdRef[Core.Basic.TiObject];
+            _buildStringifyValueAst(targetAst.obj, varType, isNestedClass, valueAst);
+
+            if isRef or isSmartReference {
+                Spp.astMgr.insertAst(
+                    (ast {
+                        sb.format("\"{{key}}\":");
+                        if target~ptr == 0 {
+                            sb.append("null");
+                        } else {
+                            valueCode
+                        }
+                    }),
+                    Map[Srl.String, ref[Core.Basic.TiObject]]()
+                        .set(String("key"), Core.Basic.TiStr(fieldName))
+                        .set(String("target"), targetAst.obj)
+                        .set(String("valueCode"), valueAst.obj)
+                );
             } else {
                 Spp.astMgr.insertAst(
                     (ast {
@@ -246,6 +261,125 @@
             }
 
             ++emittedCount;
+        }
+    }
+
+    function _hasFunction (varType: ref[Spp.Ast.Type], name: CharsPtr) : Bool {
+        def funcNames: Array[String] = Spp.astMgr.getClassFuncNames(varType);
+        def k: Int;
+        for k = 0, k < funcNames.getLength(), ++k {
+            if funcNames(k) == name return true;
+        }
+        return false;
+    }
+
+    function _isNestedClassType (varType: ref[Spp.Ast.Type]) : Bool {
+        return varType.getMyTypeInfo().typeName == "UserType" and not _isSupportedSharedRef(varType);
+    }
+
+    // Builds the statement that fills `target` (e.g. `obj.x` or `obj.x.obj`) from `json(key)`: a cast for
+    // supported types, or a nested parse for classes.
+    function _buildParseFillAst (
+        target: ref[Core.Basic.TiObject], contentType: ref[Spp.Ast.Type], fieldName: ref[String],
+        result: ref[SrdRef[Core.Basic.TiObject]]
+    ) {
+        if _isSupportedType(contentType) {
+            // An explicit cast is needed: with both Json~cast[T] and Json~cast[Nullable[T]] available,
+            // assigning a Json to a Nullable[T] implicitly would match two Nullable assignment handlers.
+            Spp.astMgr.buildAst(
+                (ast target = json(key)~cast[fieldType]),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("target"), target)
+                    .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
+                    .set(String("fieldType"), Core.Data.Ast.Passage(contentType)),
+                result
+            );
+        } else {
+            Spp.astMgr.buildAst(
+                (ast parse[fieldType](target, json(key))),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("target"), target)
+                    .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
+                    .set(String("fieldType"), Core.Data.Ast.Passage(contentType)),
+                result
+            );
+        }
+    }
+
+    function _generateJsonParse [T : type] () {
+        def vars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(T~ast);
+        def i: Int;
+        for i = 0, i < vars.getLength(), ++i {
+            def varType: ref[Spp.Ast.Type](Spp.astMgr.traceType(vars(i)));
+            def fieldName: String = Spp.astMgr.getDefinitionName(vars(i));
+            def targetAst: SrdRef[Core.Basic.TiObject];
+            def fillAst: SrdRef[Core.Basic.TiObject];
+
+            if _isSupportedType(varType) or _isNestedClassType(varType) {
+                Spp.astMgr.buildAst(
+                    (ast obj.varName),
+                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
+                    targetAst
+                );
+                _buildParseFillAst(targetAst.obj, varType, fieldName, fillAst);
+                Spp.astMgr.insertAst(fillAst.obj);
+            } else if varType.getMyTypeInfo().typeName == "ReferenceType" {
+                def contentType: ref[Spp.Ast.Type](Spp.astMgr.tryGetDeepReferenceContentType(varType));
+                if not _isSupportedType(contentType) and not _isNestedClassType(contentType) {
+                    Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
+                    continue;
+                }
+                Spp.astMgr.buildAst(
+                    (ast obj.varName),
+                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
+                    targetAst
+                );
+                _buildParseFillAst(targetAst.obj, contentType, fieldName, fillAst);
+                Spp.astMgr.insertAst(
+                    (ast {
+                        if json(key).isNull() {
+                            obj.varName~ptr = 0;
+                        } else {
+                            obj.varName~no_deref = newObj[fieldType];
+                            fillCode
+                        }
+                    }),
+                    Map[Srl.String, ref[Core.Basic.TiObject]]()
+                        .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
+                        .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
+                        .set(String("fieldType"), Core.Data.Ast.Passage(contentType))
+                        .set(String("fillCode"), fillAst.obj)
+                );
+            } else if _isSupportedSharedRef(varType) {
+                def contentType: ref[Spp.Ast.Type](_getSharedRefContentType(varType));
+                if (not _isSupportedType(contentType) and not _isNestedClassType(contentType))
+                or not _hasFunction(varType, "construct") {
+                    Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
+                    continue;
+                }
+                Spp.astMgr.buildAst(
+                    (ast obj.varName.obj),
+                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
+                    targetAst
+                );
+                _buildParseFillAst(targetAst.obj, contentType, fieldName, fillAst);
+                Spp.astMgr.insertAst(
+                    (ast {
+                        if json(key).isNull() {
+                            obj.varName.release();
+                        } else {
+                            obj.varName.construct();
+                            fillCode
+                        }
+                    }),
+                    Map[Srl.String, ref[Core.Basic.TiObject]]()
+                        .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
+                        .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
+                        .set(String("fillCode"), fillAst.obj)
+                );
+            } else {
+                Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
+            }
         }
     }
 }
