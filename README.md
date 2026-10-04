@@ -126,39 +126,73 @@ the JSON is not an object or the index is out of range.
 func stringfy [T: type] (obj: ref[T]): String;
 ```
 
-Serializes an object's fields to a JSON string. Supported field types are `Nullable[T]`,
-`Array[Nullable[T]]`, `Map[String, Nullable[T]]`, `Map[String, Array[Nullable[T]]]`, and
-`Array[Map[String, Nullable[T]]]`, where `T` is `String`, `Bool`, `Int[32]`, `Int[64]`, `Float[32]`,
-or `Float[64]`. An unset `Nullable` value is serialized as `null`.
-
-```
-class Person {
-    def name: Nullable[String];
-    def tags: Array[Nullable[String]];
-}
-
-def person: Person();
-person.name = Nullable[String](String("Sarmed"));
-person.tags.add(Nullable[String](String("admin")));
-
-Console.print("%s\n", Json.stringfy[Person](person).buf);
-// Output: {"name":"Sarmed","tags":["admin"]}
-```
+Serializes an object to a JSON string.
 
 ### parse
 
 ```
 func parse [T: type] (obj: ref[T], str: CharsPtr);
+func parse [T: type] (obj: ref[T], json: ref[Json]);
 ```
 
-Populates an existing object's fields from a JSON string, matching each JSON key against the
-object's field names. Supports the same field types as `stringfy`.
+Deserializes JSON into an existing object.
+
+The first takes the JSON as a string, the second takes a json object.
+
+#### Missing Keys
+
+A field whose key is missing from the JSON is set to its default value.
+
+#### Memory
+
+`parse` allocates memory for some field types, and you must free it yourself to avoid memory leaks:
+
+* `CharsPtr` is allocated with `Memory.alloc`. Free it with `Memory.free(obj.field)`.
+* `ref[T]` is allocated with `newObj[T]`. Free it with `freeObj[obj.field]`.
+
+Every `CharsPtr` inside a container is allocated separately, so each element must be freed:
 
 ```
-def person: Person();
-Json.parse[Person](person, "{\"name\": \"Sarmed\", \"tags\": [\"admin\"]}");
-Console.print("%s\n", person.name.value.buf);
-// Output: Sarmed
+def i: Int;
+for i = 0, i < obj.names.getLength(), ++i Memory.free(obj.names(i));   // names: Array[CharsPtr]
+```
+
+Parsing into the same object again allocates new memory for its `CharsPtr` and `ref[T]` fields
+without freeing the old memory. Free those fields first.
+
+### Supported Field Types
+
+`stringfy` and `parse` support the following field types. `X` can be any of these types, so types can
+be nested to any depth, for example `Map[String, Array[Nullable[Int]]]`.
+
+* `String` and `CharsPtr`, written as a JSON string. A null `CharsPtr` is written as `null`.
+* `Bool`, written as `true` or `false`.
+* `Int` (`Int[32]`), `Int[64]`, `Float` (`Float[32]`), and `Float[64]`, written as a number.
+* `Nullable[X]`, written as the value, or `null` when it's unset.
+* `Array[X]`, written as a JSON array.
+* `Map[String, X]`, written as a JSON object.
+* Any class, including classes inside modules and template classes, written as a nested JSON object.
+* `ref[X]` as a field's type, written as the value, or `null` when it's empty.
+* `SrdRef[X]` and `UnqRef[X]`, written as the value, or `null` when they're empty.
+* `WkRef[X]`, written as the value, or `null` when it's empty (`stringfy` only).
+
+These types are not supported and give a build error (`SPPH1015`) on the field:
+
+* Maps whose key is not `String`, such as `Map[Int, X]`.
+* Pointers other than `CharsPtr`, and fixed-size arrays (`array[T, n]`).
+* `ref[X]` inside a container or `Nullable`, such as `Array[ref[X]]`.
+* `UnqRef[X]` inside a container or `Nullable`, since a unique reference can't be copied.
+* `WkRef[X]` in `parse` since `WkRef` never owns the object it points to.
+
+## Reading values from a `Json` object directly
+
+Use an explicit cast. Because a `Json` value can be
+converted both to `String` and to `Nullable[String]`, an implicit assignment such as
+`def name: Nullable[String] = json("name");` fails with `SPPA1005`. Write:
+
+```
+def json: Json("{\"name\": \"Sarmed\"}");
+def name: Nullable[String] = json("name")~cast[Nullable[String]];
 ```
 
 ## JsonStringBuilderMixin
