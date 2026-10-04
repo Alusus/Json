@@ -244,7 +244,7 @@ class Json {
 }
 
 def JsonStringBuilderMixin: {
-    @format["jpc"]
+    @Srl.stringFormater["jpc"]
     handler this.formatJsonCharsPtr(str: ptr[Char]) {
         this.append('"');
         while str~cnt != 0 {
@@ -279,12 +279,12 @@ def JsonStringBuilderMixin: {
         this.append('"');
     }
 
-    @format["js"]
+    @Srl.stringFormater["js"]
     handler this.formatJsonString(str: String) {
         this.formatJsonCharsPtr(str.buf);
     }
 
-    @format["jns"]
+    @Srl.stringFormater["jns"]
     handler this.formatJsonNullableString(str: Nullable[String]) {
         if str.isNull this.append("null")
         else this.formatJsonCharsPtr(str.buf);
