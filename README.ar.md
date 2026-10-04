@@ -274,7 +274,7 @@ func parse [T: type] (obj: ref[T], str: CharsPtr);
 func parse [T: type] (obj: ref[T], json: ref[Json]);
 ```
 
-دالة تحوّل (`Deserliazes`) جيسون إلى كائن موجود مسبقًا.
+دالة تحوّل (`Deserializes`) جيسون إلى كائن موجود مسبقًا.
 
 الأولى تأخذ الجيسون كسلسلة نصية، والثانية تأخذ كائنًا من الصنف `جـيسون`.
 
