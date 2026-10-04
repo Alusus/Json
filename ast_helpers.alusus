@@ -1,5 +1,19 @@
+def JsonTypeKind: {
+    def UNSUPPORTED: 0;
+    def SCALAR: 1;      // String, CharsPtr, Bool, Int[32], Int[64], Float[32], Float[64]
+    def NULLABLE: 2;    // Nullable[X]
+    def ARRAY: 3;       // Array[X]
+    def MAP: 4;         // Map[String, X]
+    def SMART_REF: 5;   // SrdRef[X], UnqRef[X]
+    def WEAK_REF: 6;    // WkRef[X] (stringfy only)
+    def CLASS: 7;       // any other class
+}
+
 @merge class Json {
-    function _isSupportedType (varType: ref[Spp.Ast.Type]) : Bool {
+    //==========================================================================
+    // Type classification
+
+    function _isScalarType (varType: ref[Spp.Ast.Type]) : Bool {
         @shared def strType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.String));
         @shared def charsPtrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.CharsPtr));
         @shared def boolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Bool));
@@ -7,378 +21,338 @@
         @shared def int64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Int[64]));
         @shared def float32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Float[32]));
         @shared def float64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Float[64]));
-        @shared def nullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Srl.String]));
-        @shared def nullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Bool]));
-        @shared def nullableInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Int[32]]));
-        @shared def nullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Int[64]]));
-        @shared def nullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Float[32]]));
-        @shared def nullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Nullable[Root.Float[64]]));
-        @shared def arrNullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Nullable[Root.Srl.String]]));
-        @shared def arrNullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Nullable[Root.Bool]]));
-        @shared def arrNullableInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Nullable[Root.Int[32]]]));
-        @shared def arrNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Nullable[Root.Int[64]]]));
-        @shared def arrNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Nullable[Root.Float[32]]]));
-        @shared def arrNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Nullable[Root.Float[64]]]));
-        @shared def mapNullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Srl.String]]));
-        @shared def mapNullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Bool]]));
-        @shared def mapNullableInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[32]]]));
-        @shared def mapNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[64]]]));
-        @shared def mapNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[32]]]));
-        @shared def mapNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[64]]]));
-        @shared def mapArrNullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Srl.String]]]));
-        @shared def mapArrNullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Bool]]]));
-        @shared def mapArrNullableInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Int[32]]]]));
-        @shared def mapArrNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Int[64]]]]));
-        @shared def mapArrNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Float[32]]]]));
-        @shared def mapArrNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.Nullable[Root.Float[64]]]]));
-        @shared def arrMapNullableStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Srl.String]]]));
-        @shared def arrMapNullableBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Bool]]]));
-        @shared def arrMapNullableInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[32]]]]));
-        @shared def arrMapNullableInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Int[64]]]]));
-        @shared def arrMapNullableFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[32]]]]));
-        @shared def arrMapNullableFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.Nullable[Root.Float[64]]]]));
-        @shared def arrStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.String]));
-        @shared def arrBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Bool]));
-        @shared def arrInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Int[32]]));
-        @shared def arrInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Int[64]]));
-        @shared def arrFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Float[32]]));
-        @shared def arrFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Float[64]]));
-        @shared def mapStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.String]));
-        @shared def mapBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Bool]));
-        @shared def mapInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Int[32]]));
-        @shared def mapInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Int[64]]));
-        @shared def mapFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Float[32]]));
-        @shared def mapFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Float[64]]));
-        @shared def mapArrStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Srl.String]]));
-        @shared def mapArrBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Bool]]));
-        @shared def mapArrInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Int[32]]]));
-        @shared def mapArrInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Int[64]]]));
-        @shared def mapArrFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Float[32]]]));
-        @shared def mapArrFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Map[Root.Srl.String, Root.Srl.Array[Root.Float[64]]]));
-        @shared def arrMapStrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Srl.String]]));
-        @shared def arrMapBoolType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Bool]]));
-        @shared def arrMapInt32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Int[32]]]));
-        @shared def arrMapInt64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Int[64]]]));
-        @shared def arrMapFloat32Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Float[32]]]));
-        @shared def arrMapFloat64Type: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.Array[Root.Srl.Map[Root.Srl.String, Root.Float[64]]]));
         return varType~ptr == strType~ptr
             or varType~ptr == charsPtrType~ptr
             or varType~ptr == boolType~ptr
             or varType~ptr == int32Type~ptr
             or varType~ptr == int64Type~ptr
             or varType~ptr == float32Type~ptr
-            or varType~ptr == float64Type~ptr
-            or varType~ptr == nullableStrType~ptr
-            or varType~ptr == nullableBoolType~ptr
-            or varType~ptr == nullableInt32Type~ptr
-            or varType~ptr == nullableInt64Type~ptr
-            or varType~ptr == nullableFloat32Type~ptr
-            or varType~ptr == nullableFloat64Type~ptr
-            or varType~ptr == arrNullableStrType~ptr
-            or varType~ptr == arrNullableBoolType~ptr
-            or varType~ptr == arrNullableInt32Type~ptr
-            or varType~ptr == arrNullableInt64Type~ptr
-            or varType~ptr == arrNullableFloat32Type~ptr
-            or varType~ptr == arrNullableFloat64Type~ptr
-            or varType~ptr == mapNullableStrType~ptr
-            or varType~ptr == mapNullableBoolType~ptr
-            or varType~ptr == mapNullableInt32Type~ptr
-            or varType~ptr == mapNullableInt64Type~ptr
-            or varType~ptr == mapNullableFloat32Type~ptr
-            or varType~ptr == mapNullableFloat64Type~ptr
-            or varType~ptr == mapArrNullableStrType~ptr
-            or varType~ptr == mapArrNullableBoolType~ptr
-            or varType~ptr == mapArrNullableInt32Type~ptr
-            or varType~ptr == mapArrNullableInt64Type~ptr
-            or varType~ptr == mapArrNullableFloat32Type~ptr
-            or varType~ptr == mapArrNullableFloat64Type~ptr
-            or varType~ptr == arrMapNullableStrType~ptr
-            or varType~ptr == arrMapNullableBoolType~ptr
-            or varType~ptr == arrMapNullableInt32Type~ptr
-            or varType~ptr == arrMapNullableInt64Type~ptr
-            or varType~ptr == arrMapNullableFloat32Type~ptr
-            or varType~ptr == arrMapNullableFloat64Type~ptr
-            or varType~ptr == arrStrType~ptr
-            or varType~ptr == arrBoolType~ptr
-            or varType~ptr == arrInt32Type~ptr
-            or varType~ptr == arrInt64Type~ptr
-            or varType~ptr == arrFloat32Type~ptr
-            or varType~ptr == arrFloat64Type~ptr
-            or varType~ptr == mapStrType~ptr
-            or varType~ptr == mapBoolType~ptr
-            or varType~ptr == mapInt32Type~ptr
-            or varType~ptr == mapInt64Type~ptr
-            or varType~ptr == mapFloat32Type~ptr
-            or varType~ptr == mapFloat64Type~ptr
-            or varType~ptr == mapArrStrType~ptr
-            or varType~ptr == mapArrBoolType~ptr
-            or varType~ptr == mapArrInt32Type~ptr
-            or varType~ptr == mapArrInt64Type~ptr
-            or varType~ptr == mapArrFloat32Type~ptr
-            or varType~ptr == mapArrFloat64Type~ptr
-            or varType~ptr == arrMapStrType~ptr
-            or varType~ptr == arrMapBoolType~ptr
-            or varType~ptr == arrMapInt32Type~ptr
-            or varType~ptr == arrMapInt64Type~ptr
-            or varType~ptr == arrMapFloat32Type~ptr
-            or varType~ptr == arrMapFloat64Type~ptr;
-    }
-    
-    // True for instances of the smart reference templates (SrdRef, UnqRef, WkRef)
-    function _isSupportedSharedRef (varType: ref[Spp.Ast.Type]) : Bool {
-        @shared def srdRefTemplate: ref[Core.Basic.TiObject](Root.Srl.SrdRef~ast);
-        @shared def unqRefTemplate: ref[Core.Basic.TiObject](Root.Srl.UnqRef~ast);
-        @shared def wkRefTemplate: ref[Core.Basic.TiObject](Root.Srl.WkRef~ast);
-        if varType.getMyTypeInfo().typeName != "UserType" return false;
-        def instanceScope: ref[Core.Data.Node](varType.owner);
-        if instanceScope~ptr == 0 or instanceScope.owner~ptr == 0 return false;
-        def template: ref[Core.Basic.TiObject](instanceScope.owner);
-        return template~ptr == srdRefTemplate~ptr
-            or template~ptr == unqRefTemplate~ptr
-            or template~ptr == wkRefTemplate~ptr;
+            or varType~ptr == float64Type~ptr;
     }
 
-    // Returns the type a smart reference points to. Expects a type accepted by _isSupportedSharedRef;
-    // all of them hold their content in an `obj` reference field.
-    function _getSharedRefContentType (varType: ref[Spp.Ast.Type]) : ref[Spp.Ast.Type] {
-        def innerVars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(varType);
+    function _isUnqRefType (varType: ref[Spp.Ast.Type]) : Bool {
+        @shared def unqRefTemplate: ref[Core.Basic.TiObject](Root.Srl.UnqRef~ast);
+        return _getTemplateOf(varType)~ptr == unqRefTemplate~ptr;
+    }
+
+    // Returns the Template a type was instantiated from, or null if it isn't a template instance.
+    // A template instance's UserType is owned by a Scope that is owned by its Template.
+    function _getTemplateOf (varType: ref[Spp.Ast.Type]) : ref[Core.Basic.TiObject] {
+        if varType.getMyTypeInfo().typeName != "UserType" return nullRef[Core.Basic.TiObject];
+        def instanceScope: ref[Core.Data.Node](varType.owner);
+        if instanceScope~ptr == 0 or instanceScope.owner~ptr == 0 return nullRef[Core.Basic.TiObject];
+        if instanceScope.owner.getMyTypeInfo().typeName != "Template" return nullRef[Core.Basic.TiObject];
+        return castRef[instanceScope.owner, Core.Basic.TiObject];
+    }
+
+    // True if the given template is defined inside the Srl module.
+    function _isSrlTemplate (template: ref[Core.Basic.TiObject]) : Bool {
+        def node: ref[Core.Data.Node](castRef[template, Core.Data.Node]);
+        while node~ptr != 0 {
+            if node.getMyTypeInfo().typeName == "Module"
+            and Spp.astMgr.getDefinitionName(castRef[node, Core.Basic.TiObject]) == "Srl" {
+                return true;
+            }
+            node~no_deref = node.owner;
+        }
+        return false;
+    }
+
+    // Returns a template argument of a template instance (e.g. `T` of Array[T]). The instance's Scope holds
+    // a Definition for each argument next to the instance's UserType.
+    function _getTemplateArg (varType: ref[Spp.Ast.Type], argName: CharsPtr) : ref[Spp.Ast.Type] {
+        def instanceScope: ref[Core.Basic.TiObject](castRef[varType.owner, Core.Basic.TiObject]);
+        def container: ref[Core.Basic.Containing](Core.Basic.getInterface[instanceScope, Core.Basic.Containing]);
         def k: Int;
-        for k = 0, k < innerVars.getLength(), ++k {
-            if Spp.astMgr.getDefinitionName(innerVars(k)) == "obj" {
-                return Spp.astMgr.tryGetDeepReferenceContentType(Spp.astMgr.traceType(innerVars(k)));
+        for k = 0, k < container.getElementCount()~cast[Int], ++k {
+            def element: ref[Core.Basic.TiObject](container.getElement(k));
+            if element.getMyTypeInfo().typeName != "Definition" continue;
+            def binding: ref[Core.Basic.Binding](Core.Basic.getInterface[element, Core.Basic.Binding]);
+            if castRef[binding.getMember("name"), Core.Basic.TiStr].value == argName {
+                def target: ref[Core.Basic.TiObject](
+                    Core.Basic.getInterface[element, Core.Basic.MapContaining].getElement("target")
+                );
+                return Spp.astMgr.traceType(target);
             }
         }
         return nullRef[Spp.Ast.Type];
     }
 
-    // Builds the code that writes `target` (e.g. `obj.x` or `obj.x.obj`) as a JSON value: a nested stringfy call
-    // for classes, appendJsonValue for everything else.
-    function _buildStringifyValueAst (
-        target: ref[Core.Basic.TiObject], valueType: ref[Spp.Ast.Type], isNestedClass: Bool,
-        result: ref[SrdRef[Core.Basic.TiObject]]
-    ) {
-        if isNestedClass {
-            Spp.astMgr.buildAst(
-                (ast sb.append(stringfy[fieldType](target).buf)),
+    function _getTypeKind (varType: ref[Spp.Ast.Type]) : Int {
+        @shared def nullableTemplate: ref[Core.Basic.TiObject](Root.Srl.Nullable~ast);
+        @shared def arrayTemplate: ref[Core.Basic.TiObject](Root.Srl.Array~ast);
+        @shared def mapTemplate: ref[Core.Basic.TiObject](Root.Srl.Map~ast);
+        @shared def srdRefTemplate: ref[Core.Basic.TiObject](Root.Srl.SrdRef~ast);
+        @shared def unqRefTemplate: ref[Core.Basic.TiObject](Root.Srl.UnqRef~ast);
+        @shared def wkRefTemplate: ref[Core.Basic.TiObject](Root.Srl.WkRef~ast);
+        @shared def strType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.String));
+
+        if _isScalarType(varType) return JsonTypeKind.SCALAR;
+        if varType.getMyTypeInfo().typeName != "UserType" return JsonTypeKind.UNSUPPORTED;
+
+        def template: ref[Core.Basic.TiObject](_getTemplateOf(varType));
+        if template~ptr == 0 return JsonTypeKind.CLASS;
+        if template~ptr == nullableTemplate~ptr return JsonTypeKind.NULLABLE;
+        if template~ptr == arrayTemplate~ptr return JsonTypeKind.ARRAY;
+        if template~ptr == mapTemplate~ptr {
+            // JSON object keys are always strings.
+            if _getTemplateArg(varType, "T1")~ptr == strType~ptr return JsonTypeKind.MAP;
+            return JsonTypeKind.UNSUPPORTED;
+        }
+        if template~ptr == srdRefTemplate~ptr or template~ptr == unqRefTemplate~ptr return JsonTypeKind.SMART_REF;
+        if template~ptr == wkRefTemplate~ptr return JsonTypeKind.WEAK_REF;
+        // Other library templates (StringBuilder, Possible...) can't be serialized.
+        if _isSrlTemplate(template) return JsonTypeKind.UNSUPPORTED;
+        // A template class defined by the user, e.g. Name[T].
+        return JsonTypeKind.CLASS;
+    }
+
+    // Returns the type one level inside a Nullable, Array, Map, or smart reference.
+    function _getInnerType (varType: ref[Spp.Ast.Type]) : ref[Spp.Ast.Type] {
+        def kind: Int = _getTypeKind(varType);
+        if kind == JsonTypeKind.NULLABLE return _getTemplateArg(varType, "DataType");
+        if kind == JsonTypeKind.MAP return _getTemplateArg(varType, "T2");
+        return _getTemplateArg(varType, "T");
+    }
+
+    // True if `varType` and everything inside it can be serialized (or parsed, if `forParse` is set).
+    // Classes are not entered: a class's own fields are checked when its code is generated, so errors point
+    // at those fields.
+    function _isSerializable (varType: ref[Spp.Ast.Type], forParse: Bool, isInner: Bool) : Bool {
+        def kind: Int = _getTypeKind(varType);
+        if kind == JsonTypeKind.UNSUPPORTED return false;
+        if kind == JsonTypeKind.SCALAR return true;
+        if kind == JsonTypeKind.CLASS return true;
+        if isInner and _isUnqRefType(varType) return false;
+        if kind == JsonTypeKind.WEAK_REF and forParse return false;
+        return _isSerializable(_getInnerType(varType), forParse, true);
+    }
+
+    // Returns a field's type, unwrapping `ref[X]` (and setting `isRef`). Returns null if the field can't be
+    // serialized.
+    function _getFieldType (field: ref[Core.Basic.TiObject], forParse: Bool, isRef: ref[Bool]) : ref[Spp.Ast.Type] {
+        def fieldType: ref[Spp.Ast.Type](Spp.astMgr.traceType(field));
+        isRef = fieldType.getMyTypeInfo().typeName == "ReferenceType";
+        if isRef fieldType~ptr = Spp.astMgr.tryGetDeepReferenceContentType(fieldType)~ptr;
+        if not _isSerializable(fieldType, forParse, false) return nullRef[Spp.Ast.Type];
+        return fieldType;
+    }
+
+    //==========================================================================
+    // Code generation for _writeValue[T] (stringfy)
+
+    function _generateWriteValue [T : type] () {
+        def valueType: ref[Spp.Ast.Type](Spp.astMgr.traceType(T~ast));
+        def kind: Int = _getTypeKind(valueType);
+
+        if kind == JsonTypeKind.SCALAR {
+            Spp.astMgr.insertAst(ast sb.appendJsonValue(value));
+        } else if kind == JsonTypeKind.NULLABLE {
+            Spp.astMgr.insertAst(
+                (ast {
+                    if value.isNull sb.append("null")
+                    else _writeValue[innerType](sb, value.value);
+                }),
                 Map[Srl.String, ref[Core.Basic.TiObject]]()
-                    .set(String("target"), target)
-                    .set(String("fieldType"), Core.Data.Ast.Passage(valueType)),
-                result
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
             );
-        } else {
-            Spp.astMgr.buildAst(
-                (ast sb.appendJsonValue(target)),
-                Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("target"), target),
-                result
+        } else if kind == JsonTypeKind.ARRAY {
+            Spp.astMgr.insertAst(
+                (ast {
+                    sb.append('[');
+                    def i: Int;
+                    for i = 0, i < value.getLength(), ++i {
+                        if i > 0 sb.append(',');
+                        _writeValue[innerType](sb, value(i));
+                    }
+                    sb.append(']');
+                }),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
             );
+        } else if kind == JsonTypeKind.MAP {
+            Spp.astMgr.insertAst(
+                (ast {
+                    sb.append('{');
+                    def i: Int;
+                    for i = 0, i < value.getLength(), ++i {
+                        if i > 0 sb.append(',');
+                        sb.appendJsonValue(value.keyAt(i));
+                        sb.append(':');
+                        _writeValue[innerType](sb, value.valAt(i));
+                    }
+                    sb.append('}');
+                }),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
+            );
+        } else if kind == JsonTypeKind.SMART_REF or kind == JsonTypeKind.WEAK_REF {
+            Spp.astMgr.insertAst(
+                (ast {
+                    if value.obj~ptr == 0 sb.append("null")
+                    else _writeValue[innerType](sb, value.obj);
+                }),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
+            );
+        } else if kind == JsonTypeKind.CLASS {
+            _generateWriteClass[T]();
         }
     }
 
-    function _generateJsonStringify [T : type] () {
-        def vars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(T~ast);
+    function _generateWriteClass [T : type] () {
+        Spp.astMgr.insertAst(ast sb.append('{'));
 
+        def vars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(T~ast);
         def emittedCount: Int = 0;
         def i: Int;
         for i = 0, i < vars.getLength(), ++i {
-            def varType: ref[Spp.Ast.Type](Spp.astMgr.traceType(vars(i)));
-            def isRef: Bool(false);  
-            def isSmartReference: Bool(false);
-            def isNestedClass: Bool(false); 
-
-            if not _isSupportedType(varType) {
-                if varType.getMyTypeInfo().typeName == "ReferenceType" {
-                    varType~ptr = Spp.astMgr.tryGetDeepReferenceContentType(varType)~ptr;
-                    isRef = true;
-                } else if _isSupportedSharedRef(varType) {
-                    varType~ptr = _getSharedRefContentType(varType)~ptr;
-                    isSmartReference = true;
-                } else if varType.getMyTypeInfo().typeName == "UserType" {
-                    isNestedClass = true;
-                } else {
-                    Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
-                    continue;
-                }
-                if not isNestedClass and not _isSupportedType(varType) {
-                    // A reference (ref, SrdRef...) to a class is serialized as a nested object.
-                    if not _isNestedClassType(varType) {
-                        Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
-                        continue;
-                    }
-                    isNestedClass = true;
-                }
+            def isRef: Bool;
+            def fieldType: ref[Spp.Ast.Type](_getFieldType(vars(i), false, isRef));
+            if fieldType~ptr == 0 {
+                Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
+                continue;
             }
+
+            if emittedCount > 0 Spp.astMgr.insertAst(ast sb.append(','));
 
             def fieldName: String = Spp.astMgr.getDefinitionName(vars(i));
-
-            if emittedCount > 0 {
-               Spp.astMgr.insertAst(ast sb.append(','));
-            }
-
-            // The expression to read the value from: the field itself, or the content of a smart reference.
-            def targetAst: SrdRef[Core.Basic.TiObject];
-            if isSmartReference {
-                Spp.astMgr.buildAst(
-                    (ast obj.varName.obj),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
-                    targetAst
-                );
-            } else {
-                Spp.astMgr.buildAst(
-                    (ast obj.varName),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
-                    targetAst
-                );
-            }
-
-            def valueAst: SrdRef[Core.Basic.TiObject];
-            _buildStringifyValueAst(targetAst.obj, varType, isNestedClass, valueAst);
-
-            if isRef or isSmartReference {
+            if isRef {
                 Spp.astMgr.insertAst(
                     (ast {
                         sb.format("\"{{key}}\":");
-                        if target~ptr == 0 {
-                            sb.append("null");
-                        } else {
-                            valueCode
-                        }
+                        if value.varName~ptr == 0 sb.append("null")
+                        else _writeValue[fieldType](sb, value.varName);
                     }),
                     Map[Srl.String, ref[Core.Basic.TiObject]]()
                         .set(String("key"), Core.Basic.TiStr(fieldName))
-                        .set(String("target"), targetAst.obj)
-                        .set(String("valueCode"), valueAst.obj)
+                        .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
+                        .set(String("fieldType"), Core.Data.Ast.Passage(fieldType))
                 );
             } else {
                 Spp.astMgr.insertAst(
                     (ast {
                         sb.format("\"{{key}}\":");
-                        valueCode
+                        _writeValue[fieldType](sb, value.varName);
                     }),
                     Map[Srl.String, ref[Core.Basic.TiObject]]()
                         .set(String("key"), Core.Basic.TiStr(fieldName))
-                        .set(String("valueCode"), valueAst.obj)
-                )
+                        .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
+                        .set(String("fieldType"), Core.Data.Ast.Passage(fieldType))
+                );
             }
-
             ++emittedCount;
         }
+
+        Spp.astMgr.insertAst(ast sb.append('}'));
     }
 
-    function _hasFunction (varType: ref[Spp.Ast.Type], name: CharsPtr) : Bool {
-        def funcNames: Array[String] = Spp.astMgr.getClassFuncNames(varType);
-        def k: Int;
-        for k = 0, k < funcNames.getLength(), ++k {
-            if funcNames(k) == name return true;
-        }
-        return false;
-    }
+    //==========================================================================
+    // Code generation for _readValue[T] (parse)
 
-    function _isNestedClassType (varType: ref[Spp.Ast.Type]) : Bool {
-        return varType.getMyTypeInfo().typeName == "UserType" and not _isSupportedSharedRef(varType);
-    }
+    function _generateReadValue [T : type] () {
+        def valueType: ref[Spp.Ast.Type](Spp.astMgr.traceType(T~ast));
+        def kind: Int = _getTypeKind(valueType);
 
-    // Builds the statement that fills `target` (e.g. `obj.x` or `obj.x.obj`) from `json(key)`: a cast for
-    // supported types, or a nested parse for classes.
-    function _buildParseFillAst (
-        target: ref[Core.Basic.TiObject], contentType: ref[Spp.Ast.Type], fieldName: ref[String],
-        result: ref[SrdRef[Core.Basic.TiObject]]
-    ) {
-        if _isSupportedType(contentType) {
-            // An explicit cast is needed: with both Json~cast[T] and Json~cast[Nullable[T]] available,
-            // assigning a Json to a Nullable[T] implicitly would match two Nullable assignment handlers.
-            Spp.astMgr.buildAst(
-                (ast target = json(key)~cast[fieldType]),
+        if kind == JsonTypeKind.SCALAR {
+            // An explicit cast is needed: with both Json~cast[X] and Json~cast[Nullable[X]] available,
+            // assigning a Json implicitly would be ambiguous.
+            Spp.astMgr.insertAst(
+                (ast value = json~cast[valueType]),
                 Map[Srl.String, ref[Core.Basic.TiObject]]()
-                    .set(String("target"), target)
-                    .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
-                    .set(String("fieldType"), Core.Data.Ast.Passage(contentType)),
-                result
+                    .set(String("valueType"), Core.Data.Ast.Passage(valueType))
             );
-        } else {
-            Spp.astMgr.buildAst(
-                (ast parse[fieldType](target, json(key))),
+        } else if kind == JsonTypeKind.NULLABLE {
+            Spp.astMgr.insertAst(
+                (ast {
+                    if json.isNull() value.nullify()
+                    else {
+                        value.isNull = false;
+                        _readValue[innerType](json, value.value);
+                    }
+                }),
                 Map[Srl.String, ref[Core.Basic.TiObject]]()
-                    .set(String("target"), target)
-                    .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
-                    .set(String("fieldType"), Core.Data.Ast.Passage(contentType)),
-                result
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
             );
+        } else if kind == JsonTypeKind.ARRAY {
+            Spp.astMgr.insertAst(
+                (ast {
+                    value.clear();
+                    if json.isArray() {
+                        def i: Int;
+                        for i = 0, i < json.getLength(), ++i {
+                            _readArrayElement[innerType](json(i), value);
+                        }
+                    }
+                }),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
+            );
+        } else if kind == JsonTypeKind.MAP {
+            Spp.astMgr.insertAst(
+                (ast {
+                    value.clear();
+                    if json.isObject() {
+                        def i: Int;
+                        for i = 0, i < json.getLength(), ++i {
+                            _readMapElement[innerType](json(i), json.getKey(i), value);
+                        }
+                    }
+                }),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
+            );
+        } else if kind == JsonTypeKind.SMART_REF {
+            Spp.astMgr.insertAst(
+                (ast {
+                    if json.isNull() value.release()
+                    else {
+                        value.construct();
+                        _readValue[innerType](json, value.obj);
+                    }
+                }),
+                Map[Srl.String, ref[Core.Basic.TiObject]]()
+                    .set(String("innerType"), Core.Data.Ast.Passage(_getInnerType(valueType)))
+            );
+        } else if kind == JsonTypeKind.CLASS {
+            _generateReadClass[T]();
         }
     }
 
-    function _generateJsonParse [T : type] () {
+    function _generateReadClass [T : type] () {
         def vars: Array[ref[Core.Basic.TiObject]] = Spp.astMgr.getClassVars(T~ast);
         def i: Int;
         for i = 0, i < vars.getLength(), ++i {
-            def varType: ref[Spp.Ast.Type](Spp.astMgr.traceType(vars(i)));
-            def fieldName: String = Spp.astMgr.getDefinitionName(vars(i));
-            def targetAst: SrdRef[Core.Basic.TiObject];
-            def fillAst: SrdRef[Core.Basic.TiObject];
+            def isRef: Bool;
+            def fieldType: ref[Spp.Ast.Type](_getFieldType(vars(i), true, isRef));
+            if fieldType~ptr == 0 {
+                Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
+                continue;
+            }
 
-            if _isSupportedType(varType) or _isNestedClassType(varType) {
-                Spp.astMgr.buildAst(
-                    (ast obj.varName),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
-                    targetAst
-                );
-                _buildParseFillAst(targetAst.obj, varType, fieldName, fillAst);
-                Spp.astMgr.insertAst(fillAst.obj);
-            } else if varType.getMyTypeInfo().typeName == "ReferenceType" {
-                def contentType: ref[Spp.Ast.Type](Spp.astMgr.tryGetDeepReferenceContentType(varType));
-                if not _isSupportedType(contentType) and not _isNestedClassType(contentType) {
-                    Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
-                    continue;
-                }
-                Spp.astMgr.buildAst(
-                    (ast obj.varName),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
-                    targetAst
-                );
-                _buildParseFillAst(targetAst.obj, contentType, fieldName, fillAst);
+            def fieldName: String = Spp.astMgr.getDefinitionName(vars(i));
+            if isRef {
                 Spp.astMgr.insertAst(
                     (ast {
-                        if json(key).isNull() {
-                            obj.varName~ptr = 0;
-                        } else {
-                            obj.varName~no_deref = newObj[fieldType];
-                            fillCode
+                        if json(key).isNull() value.varName~ptr = 0
+                        else {
+                            value.varName~no_deref = newObj[fieldType];
+                            _readValue[fieldType](json(key), value.varName);
                         }
                     }),
                     Map[Srl.String, ref[Core.Basic.TiObject]]()
-                        .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
                         .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
-                        .set(String("fieldType"), Core.Data.Ast.Passage(contentType))
-                        .set(String("fillCode"), fillAst.obj)
-                );
-            } else if _isSupportedSharedRef(varType) {
-                def contentType: ref[Spp.Ast.Type](_getSharedRefContentType(varType));
-                if (not _isSupportedType(contentType) and not _isNestedClassType(contentType))
-                or not _hasFunction(varType, "construct") {
-                    Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
-                    continue;
-                }
-                Spp.astMgr.buildAst(
-                    (ast obj.varName.obj),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]().set(String("varName"), Core.Data.Ast.Identifier(fieldName)),
-                    targetAst
-                );
-                _buildParseFillAst(targetAst.obj, contentType, fieldName, fillAst);
-                Spp.astMgr.insertAst(
-                    (ast {
-                        if json(key).isNull() {
-                            obj.varName.release();
-                        } else {
-                            obj.varName.construct();
-                            fillCode
-                        }
-                    }),
-                    Map[Srl.String, ref[Core.Basic.TiObject]]()
                         .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
-                        .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
-                        .set(String("fillCode"), fillAst.obj)
+                        .set(String("fieldType"), Core.Data.Ast.Passage(fieldType))
                 );
             } else {
-                Spp.buildMgr.raiseBuildNotice("SPPH1015", 1, vars(i));
+                Spp.astMgr.insertAst(
+                    (ast _readValue[fieldType](json(key), value.varName)),
+                    Map[Srl.String, ref[Core.Basic.TiObject]]()
+                        .set(String("key"), Core.Data.Ast.StringLiteral(fieldName))
+                        .set(String("varName"), Core.Data.Ast.Identifier(fieldName))
+                        .set(String("fieldType"), Core.Data.Ast.Passage(fieldType))
+                );
             }
         }
     }
