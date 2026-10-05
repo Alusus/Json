@@ -2,7 +2,7 @@ import "Srl/Array.alusus";
 import "Srl/String.alusus";
 import "Srl/StringBuilder.alusus";
 import "Srl/Nullable.alusus";
-
+import "Srl/Map.alusus";
 class Json {
     use Srl;
     def keys: Array[String];
@@ -157,37 +157,6 @@ class Json {
         return this.values(i);
     }
 
-    handler this~cast[Nullable[String]] {
-        if this.isNull() return Nullable[String]()
-        else return Nullable[String](parseString(this.rawValue, this.rawValue.getLength()));
-    }
-
-    handler this~cast[Nullable[Int[64]]] {
-        if this.isNull() return Nullable[Int[64]]()
-        else return Nullable[Int[64]](String.parseInt(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Int[32]]] {
-        if this.isNull() return Nullable[Int[32]]()
-        else return Nullable[Int[32]](String.parseInt(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Float[64]]] {
-        if this.isNull() return Nullable[Float[64]]()
-        else return Nullable[Float[64]](String.parseFloat(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Float[32]]] {
-        if this.isNull() return Nullable[Float[32]]()
-        else return Nullable[Float[32]](String.parseFloat(this.rawValue));
-    }
-
-    handler this~cast[Nullable[Bool]] {
-        if this.isNull() return Nullable[Bool]()
-        else if this.rawValue == "true" return Nullable[Bool](true)
-        else return Nullable[Bool](false);
-    }
-
     handler this.isNull(): Bool {
         if this.rawValue == "null" return true
         else return false;
@@ -240,8 +209,50 @@ class Json {
         }
         res.buf~cnt(length++) = 0;
         return res;
+    }    
+    
+    func stringfy [T : type] (obj : ref[T]): String {
+        def sb : StringBuilder[JsonStringBuilderMixin](256, 256);
+        _writeValue[T](sb, obj);
+        return sb~cast[String];
+    }
+
+    func parse [T : type] (obj : ref[T] , str: CharsPtr) {
+        def json : Json(str);
+        parse[T](obj , json);
+    }
+
+    func parse [T : type] (obj : ref[T] , json : ref[Json]) {
+        _readValue[T](json, obj);
+    }
+
+    func _writeValue [T : type] (sb : ref[StringBuilder[JsonStringBuilderMixin]], value : ref[T]) {
+        preprocess {
+            _generateWriteValue[T]()
+        }
+    }
+
+    func _readValue [T : type] (json : ref[Json], value : ref[T]) {
+        preprocess {
+            _generateReadValue[T]()
+        }
+    }
+
+    func _readArrayElement [T : type] (json : ref[Json], arr : ref[Array[T]]) {
+        def element : T;
+        _readValue[T](json, element);
+        arr.add(element);
+    }
+
+    func _readMapElement [T : type] (json : ref[Json], key : ref[String], map : ref[Map[String, T]]) {
+        def element : T;
+        _readValue[T](json, element);
+        map.set(key, element);
     }
 }
+
+import "casts.alusus";
+import "ast_helpers.alusus";
 
 def JsonStringBuilderMixin: {
     @format["jpc"]
@@ -288,5 +299,39 @@ def JsonStringBuilderMixin: {
     handler this.formatJsonNullableString(str: Nullable[String]) {
         if str.isNull this.append("null")
         else this.formatJsonCharsPtr(str.buf);
+    }
+    
+    handler this.appendJsonValue(v: ptr[Char]) {
+        if v == 0 this.append("null")
+        else this.formatJsonCharsPtr(v);
+    }
+
+    handler this.appendJsonValue(v: CharsPtr) {
+        this.appendJsonValue(v~cast[ptr[Char]]);
+    }
+
+    handler this.appendJsonValue(v: String) {
+        this.formatJsonCharsPtr(v.buf);
+    }
+
+    handler this.appendJsonValue(v: Int[32]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Int[64]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Float[32]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Float[64]) {
+        this.append(v);
+    }
+
+    handler this.appendJsonValue(v: Bool) {
+        if v this.append("true")
+        else this.append("false");
     }
 }

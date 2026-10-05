@@ -13,6 +13,8 @@
     عرف أهو_كائن: لقب isObject؛
     عرف أهي_مصفوفة: لقب isArray؛
     عرف رمز: لقب escape؛
+    عرف نصّص: لقب stringfy؛
+    عرف اقرأ: لقب parse؛
 }
 
 عرف مـكون_منشئ_نص_جيسون: JsonStringBuilderMixin & {
