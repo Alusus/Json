@@ -2,7 +2,7 @@ import "Srl/Console";
 import "Srl/StringBuilder";
 import "Srl/Nullable";
 import "Apm";
-Apm.importPackage("Alusus/Json@0.2");
+Apm.importPackage("Alusus/Json@0.3");
 use Srl;
 
 func testJsonStringBuilderMixin {

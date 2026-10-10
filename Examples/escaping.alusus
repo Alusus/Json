@@ -1,6 +1,6 @@
 import "Srl/Console.alusus";
 import "Apm";
-Apm.importPackage("Alusus/Json@0.2");
+Apm.importPackage("Alusus/Json@0.3");
 
 use Srl;
 func testJsonWithEscapeChars {

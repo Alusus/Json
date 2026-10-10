@@ -11,14 +11,14 @@
 
 ```
 اشمل "مـحا"؛
-مـحا.اشمل_حزمة("Alusus/Json@0.2"، "جـيسون.أسس")؛
+مـحا.اشمل_حزمة("Alusus/Json@0.3"، "جـيسون.أسس")؛
 ```
 
 </div>
 
 ```
 import "Apm";
-Apm.importPackage("Alusus/Json@0.2");
+Apm.importPackage("Alusus/Json@0.3");
 ```
 
 ## مثال
@@ -28,7 +28,7 @@ Apm.importPackage("Alusus/Json@0.2");
 ```
 اشمل "مـتم/طـرفية.أسس"؛
 اشمل "مـحا"؛
-مـحا.اشمل_حزمة("Alusus/Json@0.2"، "جـيسون.أسس")؛
+مـحا.اشمل_حزمة("Alusus/Json@0.3"، "جـيسون.أسس")؛
 
 استخدم مـتم؛
 
@@ -68,7 +68,7 @@ Apm.importPackage("Alusus/Json@0.2");
 ```
 import "Srl/Console.alusus"
 import "Apm";
-Apm.importPackage("Alusus/Json@0.2");
+Apm.importPackage("Alusus/Json@0.3");
 
 use Srl
 func start {
@@ -252,7 +252,7 @@ handler this.getKey(index: Int): String;
 ```
 اشمل "مـتم/مـنشئ_نص"؛
 اشمل "مـحا"؛
-مـحا.اشمل_حزمة("Alusus/Json@0.2"، "جـيسون.أسس")؛
+مـحا.اشمل_حزمة("Alusus/Json@0.3"، "جـيسون.أسس")؛
 استخدم مـتم؛
 
 عرّف منشئ_نص: مـنشئ_نص[مـكون_منشئ_نص_جيسون](512، 512)؛
@@ -263,7 +263,7 @@ handler this.getKey(index: Int): String;
 ```
 import "Srl/StringBuilder";
 import "Apm";
-Apm.importPackage("Alusus/Json@0.2");
+Apm.importPackage("Alusus/Json@0.3");
 use Srl;
 
 def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
@@ -288,7 +288,7 @@ def stringBuilder: StringBuilder[JsonStringBuilderMixin](512, 512);
 اشمل "مـتم/مـنشئ_نص"؛
 اشمل "مـتم/بـعدم"؛
 اشمل "مـحا"؛
-مـحا.اشمل_حزمة("Alusus/Json@0.2"، "جـيسون.أسس")؛
+مـحا.اشمل_حزمة("Alusus/Json@0.3"، "جـيسون.أسس")؛
 استخدم مـتم؛
 
 دالة اختبر_مكون_منشئ_نص_جيسون {
@@ -313,7 +313,7 @@ import "Srl/Console";
 import "Srl/StringBuilder";
 import "Srl/Nullable";
 import "Apm";
-Apm.importPackage("Alusus/Json@0.2");
+Apm.importPackage("Alusus/Json@0.3");
 use Srl;
 
 func testJsonStringBuilderMixin {
