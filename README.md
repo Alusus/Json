@@ -1,8 +1,9 @@
 # Json
+
 [[عربي]](README.ar.md)
 
-A JSON parser for Alusus Language. For now, this library supports only reading and extracting information from JSON,
-not creating JSONs.
+A JSON library for Alusus Language. It supports reading and extracting information from JSON, serializing
+objects to JSON, and parsing JSON directly into typed objects.
 
 ## Adding to the Project
 
@@ -118,6 +119,81 @@ handler this.getKey(index: Int): String;
 ```
 Returns the key at at the specified index if the JSON is an object. Returns an empty string if
 the JSON is not an object or the index is out of range.
+
+### stringfy
+
+```
+func stringfy [T: type] (obj: ref[T]): String;
+```
+
+Serializes an object to a JSON string.
+
+### parse
+
+```
+func parse [T: type] (obj: ref[T], str: CharsPtr);
+func parse [T: type] (obj: ref[T], json: ref[Json]);
+```
+
+Deserializes JSON into an existing object.
+
+The first takes the JSON as a string, the second takes a json object.
+
+#### Missing Keys
+
+A field whose key is missing from the JSON is set to its default value.
+
+#### Memory
+
+`parse` allocates memory for some field types, and you must free it yourself to avoid memory leaks:
+
+* `CharsPtr` is allocated with `Memory.alloc`. Free it with `Memory.free(obj.field)`.
+* `ref[T]` is allocated with `newObj[T]`. Free it with `freeObj[obj.field]`.
+
+Every `CharsPtr` inside a container is allocated separately, so each element must be freed:
+
+```
+def i: Int;
+for i = 0, i < obj.names.getLength(), ++i Memory.free(obj.names(i));   // names: Array[CharsPtr]
+```
+
+Parsing into the same object again allocates new memory for its `CharsPtr` and `ref[T]` fields
+without freeing the old memory. Free those fields first.
+
+### Supported Field Types
+
+`stringfy` and `parse` support the following field types. `X` can be any of these types, so types can
+be nested to any depth, for example `Map[String, Array[Nullable[Int]]]`.
+
+* `String` and `CharsPtr`, written as a JSON string. A null `CharsPtr` is written as `null`.
+* `Bool`, written as `true` or `false`.
+* `Int` (`Int[32]`), `Int[64]`, `Float` (`Float[32]`), and `Float[64]`, written as a number.
+* `Nullable[X]`, written as the value, or `null` when it's unset.
+* `Array[X]`, written as a JSON array.
+* `Map[String, X]`, written as a JSON object.
+* Any class, including classes inside modules and template classes, written as a nested JSON object.
+* `ref[X]` as a field's type, written as the value, or `null` when it's empty.
+* `SrdRef[X]` and `UnqRef[X]`, written as the value, or `null` when they're empty.
+* `WkRef[X]`, written as the value, or `null` when it's empty (`stringfy` only).
+
+These types are not supported and give a build error (`SPPH1015`) on the field:
+
+* Maps whose key is not `String`, such as `Map[Int, X]`.
+* Pointers other than `CharsPtr`, and fixed-size arrays (`array[T, n]`).
+* `ref[X]` inside a container or `Nullable`, such as `Array[ref[X]]`.
+* `UnqRef[X]` inside a container or `Nullable`, since a unique reference can't be copied.
+* `WkRef[X]` in `parse` since `WkRef` never owns the object it points to.
+
+## Reading values from a `Json` object directly
+
+Use an explicit cast. Because a `Json` value can be
+converted both to `String` and to `Nullable[String]`, an implicit assignment such as
+`def name: Nullable[String] = json("name");` fails with `SPPA1005`. Write:
+
+```
+def json: Json("{\"name\": \"Sarmed\"}");
+def name: Nullable[String] = json("name")~cast[Nullable[String]];
+```
 
 ## JsonStringBuilderMixin
 

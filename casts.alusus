@@ -1,0 +1,71 @@
+@merge class Json {
+    use Srl;
+
+    handler this~cast[Nullable[String]] {
+        if this.isNull() return Nullable[String]()
+        else return Nullable[String](parseString(this.rawValue, this.rawValue.getLength()));
+    }
+
+    handler this~cast[Nullable[Int[64]]] {
+        if this.isNull() return Nullable[Int[64]]()
+        else return Nullable[Int[64]](String.parseInt(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Int[32]]] {
+        if this.isNull() return Nullable[Int[32]]()
+        else return Nullable[Int[32]](String.parseInt(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Float[64]]] {
+        if this.isNull() return Nullable[Float[64]]()
+        else return Nullable[Float[64]](String.parseFloat(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Float[32]]] {
+        if this.isNull() return Nullable[Float[32]]()
+        else return Nullable[Float[32]](String.parseFloat(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Bool]] {
+        if this.isNull() return Nullable[Bool]()
+        else if this.rawValue == "true" return Nullable[Bool](true)
+        else return Nullable[Bool](false);
+    }
+
+    handler this~cast[String] {
+        if this.isNull() return String()
+        else return parseString(this.rawValue, this.rawValue.getLength());
+    }
+
+    handler this~cast[Int[64]] {
+        if this.isNull() return 0
+        else return String.parseInt(this.rawValue);
+    }
+
+    handler this~cast[Int[32]] {
+        if this.isNull() return 0
+        else return String.parseInt(this.rawValue);
+    }
+
+    handler this~cast[Float[64]] {
+        if this.isNull() return 0
+        else return String.parseFloat(this.rawValue);
+    }
+
+    handler this~cast[Float[32]] {
+        if this.isNull() return 0
+        else return String.parseFloat(this.rawValue);
+    }
+
+    handler this~cast[Bool] {
+        return this.rawValue == "true";
+    }
+
+    handler this~cast[CharsPtr] {
+        if this.isNull() return 0~cast[CharsPtr];
+        def str: String = parseString(this.rawValue, this.rawValue.getLength());
+        def buf: CharsPtr = Memory.alloc(str.getLength() + 1)~cast[CharsPtr];
+        Memory.copy(buf, str.buf, str.getLength() + 1);
+        return buf;
+    }
+}
