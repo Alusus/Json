@@ -253,13 +253,8 @@ def JsonTypeKind: {
         def kind: Int = _getTypeKind(valueType);
 
         if kind == JsonTypeKind.SCALAR {
-            // An explicit cast is needed: with both Json~cast[X] and Json~cast[Nullable[X]] available,
-            // assigning a Json implicitly would be ambiguous.
-            Spp.astMgr.insertAst(
-                (ast value = json~cast[valueType]),
-                Map[Srl.String, ref[Core.Ast.Node]]()
-                    .set(String("valueType"), Core.Ast.Passage(valueType))
-            );
+            // An explicit cast makes the conversion go through Json~cast[Nullable[X]].
+            Spp.astMgr.insertAst(ast value = json~cast[T]);
         } else if kind == JsonTypeKind.NULLABLE {
             Spp.astMgr.insertAst(
                 (ast {
