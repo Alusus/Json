@@ -13,12 +13,13 @@ use Srl;
 use Spp;
 
 class Name [T : type] {
-    def firstName : Nullable[T];
-    def secondName : Nullable[T];
+    def firstName : T;
+    def secondName : T;
 }
 class Person {
     def z : Int;
     def name : Name[String];
+    def age : Int;
     def tags : Array[Nullable[String]];
     def scores : Map[String, Nullable[String]];
     def data : Map[String, Array[Nullable[String]]];
@@ -28,7 +29,8 @@ class Person {
 
 def person : Person();
 
-person.name.firstName =  Nullable[String](String("Sarmed"));
+person.name.firstName =  String("Sarmed");
+person.age = Int(30);
 person.tags.add(Nullable[String](String("admin")));
 person.scores.set(String("math"), Nullable[String](String("A")));
 
