@@ -53,12 +53,4 @@
         }
         return Nullable[Bool](this.rawValue == "true");
     }
-
-    handler this~cast[CharsPtr] {
-        if this.isNull() return 0~cast[CharsPtr];
-        def str: String = parseString(this.rawValue, this.rawValue.getLength());
-        def buf: CharsPtr = Memory.alloc(str.getLength() + 1)~cast[CharsPtr];
-        Memory.copy(buf, str.buf, str.getLength() + 1);
-        return buf;
-    }
 }

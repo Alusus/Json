@@ -1,6 +1,6 @@
 def JsonTypeKind: {
     def UNSUPPORTED: 0;
-    def SCALAR: 1;      // String, CharsPtr, Bool, Int[32], Int[64], Float[32], Float[64]
+    def SCALAR: 1;      // String, CharsPtr (stringfy only), Bool, Int[32], Int[64], Float[32], Float[64]
     def NULLABLE: 2;    // Nullable[X]
     def ARRAY: 3;       // Array[X]
     def MAP: 4;         // Map[String, X]
@@ -28,6 +28,11 @@ def JsonTypeKind: {
             or varType~ptr == int64Type~ptr
             or varType~ptr == float32Type~ptr
             or varType~ptr == float64Type~ptr;
+    }
+
+    function _isCharsPtrType (varType: ref[Spp.Ast.Type]) : Bool {
+        @shared def charsPtrType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.CharsPtr));
+        return varType~ptr == charsPtrType~ptr;
     }
 
     function _isUnqRefType (varType: ref[Spp.Ast.Type]) : Bool {
@@ -119,6 +124,7 @@ def JsonTypeKind: {
     function _isSerializable (varType: ref[Spp.Ast.Type], forParse: Bool, isInner: Bool) : Bool {
         def kind: Int = _getTypeKind(varType);
         if kind == JsonTypeKind.UNSUPPORTED return false;
+        if forParse and _isCharsPtrType(varType) return false;
         if kind == JsonTypeKind.SCALAR return true;
         if kind == JsonTypeKind.CLASS return true;
         if isInner and _isUnqRefType(varType) return false;
@@ -253,8 +259,7 @@ def JsonTypeKind: {
         def kind: Int = _getTypeKind(valueType);
 
         if kind == JsonTypeKind.SCALAR {
-            // An explicit cast makes the conversion go through Json~cast[Nullable[X]].
-            Spp.astMgr.insertAst(ast value = json~cast[T]);
+            Spp.astMgr.insertAst(ast value = json);
         } else if kind == JsonTypeKind.NULLABLE {
             Spp.astMgr.insertAst(
                 (ast {
