@@ -145,20 +145,11 @@ A field whose key is missing from the JSON is set to its default value.
 
 #### Memory
 
-`parse` allocates memory for some field types, and you must free it yourself to avoid memory leaks:
+`parse` allocates `ref[T]` fields with `newObj[T]`, and you must free them yourself with
+`freeObj[obj.field]` to avoid memory leaks.
 
-* `CharsPtr` is allocated with `Memory.alloc`. Free it with `Memory.free(obj.field)`.
-* `ref[T]` is allocated with `newObj[T]`. Free it with `freeObj[obj.field]`.
-
-Every `CharsPtr` inside a container is allocated separately, so each element must be freed:
-
-```
-def i: Int;
-for i = 0, i < obj.names.getLength(), ++i Memory.free(obj.names(i));   // names: Array[CharsPtr]
-```
-
-Parsing into the same object again allocates new memory for its `CharsPtr` and `ref[T]` fields
-without freeing the old memory. Free those fields first.
+Parsing into the same object again allocates new memory for its `ref[T]` fields without freeing the old
+memory. Free those fields first.
 
 ### Supported Field Types
 
@@ -183,17 +174,24 @@ These types are not supported and give a build error (`SPPH1015`) on the field:
 * `ref[X]` inside a container or `Nullable`, such as `Array[ref[X]]`.
 * `UnqRef[X]` inside a container or `Nullable`, since a unique reference can't be copied.
 * `WkRef[X]` in `parse` since `WkRef` never owns the object it points to.
+* `CharsPtr` in `parse`. Use `String` instead.
 
 ## Reading values from a `Json` object directly
 
-Use an explicit cast. Because a `Json` value can be
-converted both to `String` and to `Nullable[String]`, an implicit assignment such as
-`def name: Nullable[String] = json("name");` fails with `SPPA1005`. Write:
+A `Json` value can be assigned directly to a `String`, `Bool`, `Int`, `Int[64]`, `Float`, or `Float[64]`
+variable, or to a `Nullable` of any of them. An explicit cast such as `json("name")~cast[String]` works too.
 
 ```
-def json: Json("{\"name\": \"Sarmed\"}");
-def name: Nullable[String] = json("name")~cast[Nullable[String]];
+def json: Json("{\"name\": \"Sarmed\", \"age\": null}");
+def name: String = json("name");
+def age: Nullable[Int] = json("age");
 ```
+
+A JSON `null` gives a null `Nullable`. Assigned to a type that isn't `Nullable`, it gives `0`, `false`, or an
+empty string, so use `Nullable` when you need to tell `null` apart from those values.
+
+To read text, use `String` rather than `CharsPtr`. A `CharsPtr` would point into a temporary `String` that's
+freed at the end of the statement.
 
 ## JsonStringBuilderMixin
 
