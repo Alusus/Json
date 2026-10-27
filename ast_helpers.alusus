@@ -1,15 +1,14 @@
-def JsonTypeKind: {
-    def UNSUPPORTED: 0;
-    def SCALAR: 1;      // String, CharsPtr (stringfy only), Bool, Int[32], Int[64], Float[32], Float[64]
-    def NULLABLE: 2;    // Nullable[X]
-    def ARRAY: 3;       // Array[X]
-    def MAP: 4;         // Map[String, X]
-    def SMART_REF: 5;   // SrdRef[X], UnqRef[X]
-    def WEAK_REF: 6;    // WkRef[X] (stringfy only)
-    def CLASS: 7;       // any other class
-}
-
 @merge class Json {
+    def TypeCategory: {
+        def UNSUPPORTED: 0;
+        def SCALAR: 1;      // String, CharsPtr (stringfy only), Bool, Int[32], Int[64], Float[32], Float[64]
+        def NULLABLE: 2;    // Nullable[X]
+        def ARRAY: 3;       // Array[X]
+        def MAP: 4;         // Map[String, X]
+        def SMART_REF: 5;   // SrdRef[X], UnqRef[X]
+        def WEAK_REF: 6;    // WkRef[X] (stringfy only)
+        def CLASS: 7;       // any other class
+    }
     //==========================================================================
     // Type classification
 
@@ -81,7 +80,7 @@ def JsonTypeKind: {
         return nullRef[Spp.Ast.Type];
     }
 
-    function _getTypeKind (varType: ref[Spp.Ast.Type]) : Int {
+    function _getTypeCategory (varType: ref[Spp.Ast.Type]) : Int {
         @shared def nullableTemplate: ref[Core.Ast.Node](Root.Srl.Nullable~ast);
         @shared def arrayTemplate: ref[Core.Ast.Node](Root.Srl.Array~ast);
         @shared def mapTemplate: ref[Core.Ast.Node](Root.Srl.Map~ast);
@@ -90,31 +89,31 @@ def JsonTypeKind: {
         @shared def wkRefTemplate: ref[Core.Ast.Node](Root.Srl.WkRef~ast);
         @shared def strType: ref[Spp.Ast.Type](Spp.astMgr.traceType(ast Root.Srl.String));
 
-        if _isScalarType(varType) return JsonTypeKind.SCALAR;
-        if varType.getMyTypeInfo().typeName != "UserType" return JsonTypeKind.UNSUPPORTED;
+        if _isScalarType(varType) return TypeCategory.SCALAR;
+        if varType.getMyTypeInfo().typeName != "UserType" return TypeCategory.UNSUPPORTED;
 
         def template: ref[Core.Ast.Node](_getTemplateOf(varType));
-        if template~ptr == 0 return JsonTypeKind.CLASS;
-        if template~ptr == nullableTemplate~ptr return JsonTypeKind.NULLABLE;
-        if template~ptr == arrayTemplate~ptr return JsonTypeKind.ARRAY;
+        if template~ptr == 0 return TypeCategory.CLASS;
+        if template~ptr == nullableTemplate~ptr return TypeCategory.NULLABLE;
+        if template~ptr == arrayTemplate~ptr return TypeCategory.ARRAY;
         if template~ptr == mapTemplate~ptr {
             // JSON object keys are always strings.
-            if _getTemplateArg(varType, "T1")~ptr == strType~ptr return JsonTypeKind.MAP;
-            return JsonTypeKind.UNSUPPORTED;
+            if _getTemplateArg(varType, "T1")~ptr == strType~ptr return TypeCategory.MAP;
+            return TypeCategory.UNSUPPORTED;
         }
-        if template~ptr == srdRefTemplate~ptr or template~ptr == unqRefTemplate~ptr return JsonTypeKind.SMART_REF;
-        if template~ptr == wkRefTemplate~ptr return JsonTypeKind.WEAK_REF;
+        if template~ptr == srdRefTemplate~ptr or template~ptr == unqRefTemplate~ptr return TypeCategory.SMART_REF;
+        if template~ptr == wkRefTemplate~ptr return TypeCategory.WEAK_REF;
         // Other library templates (StringBuilder, Possible...) can't be serialized.
-        if _isSrlTemplate(template) return JsonTypeKind.UNSUPPORTED;
+        if _isSrlTemplate(template) return TypeCategory.UNSUPPORTED;
         // A template class defined by the user, e.g. Name[T].
-        return JsonTypeKind.CLASS;
+        return TypeCategory.CLASS;
     }
 
     // Returns the type one level inside a Nullable, Array, Map, or smart reference.
     function _getInnerType (varType: ref[Spp.Ast.Type]) : ref[Spp.Ast.Type] {
-        def kind: Int = _getTypeKind(varType);
-        if kind == JsonTypeKind.NULLABLE return _getTemplateArg(varType, "DataType");
-        if kind == JsonTypeKind.MAP return _getTemplateArg(varType, "T2");
+        def kind: Int = _getTypeCategory(varType);
+        if kind == TypeCategory.NULLABLE return _getTemplateArg(varType, "DataType");
+        if kind == TypeCategory.MAP return _getTemplateArg(varType, "T2");
         return _getTemplateArg(varType, "T");
     }
 
@@ -122,13 +121,13 @@ def JsonTypeKind: {
     // Classes are not entered: a class's own fields are checked when its code is generated, so errors point
     // at those fields.
     function _isSerializable (varType: ref[Spp.Ast.Type], forParse: Bool, isInner: Bool) : Bool {
-        def kind: Int = _getTypeKind(varType);
-        if kind == JsonTypeKind.UNSUPPORTED return false;
+        def kind: Int = _getTypeCategory(varType);
+        if kind == TypeCategory.UNSUPPORTED return false;
         if forParse and _isCharsPtrType(varType) return false;
-        if kind == JsonTypeKind.SCALAR return true;
-        if kind == JsonTypeKind.CLASS return true;
+        if kind == TypeCategory.SCALAR return true;
+        if kind == TypeCategory.CLASS return true;
         if isInner and _isUnqRefType(varType) return false;
-        if kind == JsonTypeKind.WEAK_REF and forParse return false;
+        if kind == TypeCategory.WEAK_REF and forParse return false;
         return _isSerializable(_getInnerType(varType), forParse, true);
     }
 
@@ -147,11 +146,11 @@ def JsonTypeKind: {
 
     function _generateWriteValue [T : type] () {
         def valueType: ref[Spp.Ast.Type](Spp.astMgr.traceType(T~ast));
-        def kind: Int = _getTypeKind(valueType);
+        def kind: Int = _getTypeCategory(valueType);
 
-        if kind == JsonTypeKind.SCALAR {
+        if kind == TypeCategory.SCALAR {
             Spp.astMgr.insertAst(ast sb.appendJsonValue(value));
-        } else if kind == JsonTypeKind.NULLABLE {
+        } else if kind == TypeCategory.NULLABLE {
             Spp.astMgr.insertAst(
                 (ast {
                     if value.isNull sb.append("null")
@@ -160,7 +159,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.ARRAY {
+        } else if kind == TypeCategory.ARRAY {
             Spp.astMgr.insertAst(
                 (ast {
                     sb.append('[');
@@ -174,7 +173,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.MAP {
+        } else if kind == TypeCategory.MAP {
             Spp.astMgr.insertAst(
                 (ast {
                     sb.append('{');
@@ -190,7 +189,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.SMART_REF or kind == JsonTypeKind.WEAK_REF {
+        } else if kind == TypeCategory.SMART_REF or kind == TypeCategory.WEAK_REF {
             Spp.astMgr.insertAst(
                 (ast {
                     if value.obj~ptr == 0 sb.append("null")
@@ -199,7 +198,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.CLASS {
+        } else if kind == TypeCategory.CLASS {
             _generateWriteClass[T]();
         }
     }
@@ -256,11 +255,11 @@ def JsonTypeKind: {
 
     function _generateReadValue [T : type] () {
         def valueType: ref[Spp.Ast.Type](Spp.astMgr.traceType(T~ast));
-        def kind: Int = _getTypeKind(valueType);
+        def kind: Int = _getTypeCategory(valueType);
 
-        if kind == JsonTypeKind.SCALAR {
+        if kind == TypeCategory.SCALAR {
             Spp.astMgr.insertAst(ast value = json);
-        } else if kind == JsonTypeKind.NULLABLE {
+        } else if kind == TypeCategory.NULLABLE {
             Spp.astMgr.insertAst(
                 (ast {
                     if json.isNull() value.nullify()
@@ -272,7 +271,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.ARRAY {
+        } else if kind == TypeCategory.ARRAY {
             Spp.astMgr.insertAst(
                 (ast {
                     value.clear();
@@ -286,7 +285,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.MAP {
+        } else if kind == TypeCategory.MAP {
             Spp.astMgr.insertAst(
                 (ast {
                     value.clear();
@@ -300,7 +299,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.SMART_REF {
+        } else if kind == TypeCategory.SMART_REF {
             Spp.astMgr.insertAst(
                 (ast {
                     if json.isNull() value.release()
@@ -312,7 +311,7 @@ def JsonTypeKind: {
                 Map[Srl.String, ref[Core.Ast.Node]]()
                     .set(String("innerType"), Core.Ast.Passage(_getInnerType(valueType)))
             );
-        } else if kind == JsonTypeKind.CLASS {
+        } else if kind == TypeCategory.CLASS {
             _generateReadClass[T]();
         }
     }
