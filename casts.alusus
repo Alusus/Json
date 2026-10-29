@@ -1,0 +1,56 @@
+@merge class Json {
+    use Srl;
+
+    handler this~cast[Nullable[String]] {
+        if this.isNull() return Nullable[String]()
+        else return Nullable[String](parseString(this.rawValue, this.rawValue.getLength()));
+    }
+
+    // Nullable doesn't initialize the value of a null instance, so for basic types we set it explicitly to
+    // avoid returning garbage when a null Json is implicitly cast to the non-nullable type.
+
+    handler this~cast[Nullable[Int[64]]] {
+        if this.isNull() {
+            def result: Nullable[Int[64]];
+            result.value = 0;
+            return result;
+        }
+        return Nullable[Int[64]](String.parseInt(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Int[32]]] {
+        if this.isNull() {
+            def result: Nullable[Int[32]];
+            result.value = 0;
+            return result;
+        }
+        return Nullable[Int[32]](String.parseInt(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Float[64]]] {
+        if this.isNull() {
+            def result: Nullable[Float[64]];
+            result.value = 0;
+            return result;
+        }
+        return Nullable[Float[64]](String.parseFloat(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Float[32]]] {
+        if this.isNull() {
+            def result: Nullable[Float[32]];
+            result.value = 0;
+            return result;
+        }
+        return Nullable[Float[32]](String.parseFloat(this.rawValue));
+    }
+
+    handler this~cast[Nullable[Bool]] {
+        if this.isNull() {
+            def result: Nullable[Bool];
+            result.value = false;
+            return result;
+        }
+        return Nullable[Bool](this.rawValue == "true");
+    }
+}
